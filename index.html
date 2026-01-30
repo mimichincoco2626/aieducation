@@ -8,13 +8,14 @@
     <!-- 引入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- 設定 Tailwind 主題顏色 (模擬原本的設定) -->
+    <!-- 設定 Tailwind 主題顏色 -->
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     animation: {
                         'fade-in': 'fadeIn 0.5s ease-out',
+                        'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                     },
                     keyframes: {
                         fadeIn: {
@@ -42,7 +43,6 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <style>
-        /* 隱藏 Scrollbar 但保持功能 */
         .scrollbar-hide::-webkit-scrollbar {
             display: none;
         }
@@ -126,6 +126,32 @@
                 author: "測試人員"
             }
         ];
+
+        // 新增：骨架屏組件 (Skeleton Card)
+        const SkeletonCard = () => (
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden h-full flex flex-col">
+                <div className="h-44 bg-slate-200 animate-pulse"></div>
+                <div className="p-5 flex flex-col gap-4 flex-grow">
+                    <div className="h-7 bg-slate-200 rounded animate-pulse w-3/4"></div>
+                    <div className="space-y-2 flex-grow">
+                        <div className="h-4 bg-slate-200 rounded animate-pulse w-full"></div>
+                        <div className="h-4 bg-slate-200 rounded animate-pulse w-full"></div>
+                        <div className="h-4 bg-slate-200 rounded animate-pulse w-2/3"></div>
+                    </div>
+                    <div className="pt-4 border-t border-slate-100 flex justify-between items-center mt-auto">
+                        <div className="h-4 bg-slate-200 rounded animate-pulse w-1/3"></div>
+                        <div className="h-4 bg-slate-200 rounded animate-pulse w-1/4"></div>
+                    </div>
+                </div>
+            </div>
+        );
+
+        // 新增：Hero 骨架屏
+        const SkeletonHero = () => (
+            <div className="mb-10 md:mb-12 relative bg-slate-200 rounded-3xl overflow-hidden shadow-sm h-[400px] animate-pulse">
+                <div className="absolute inset-0 bg-gradient-to-r from-slate-300 to-slate-200"></div>
+            </div>
+        );
 
         function App() {
             const [articles, setArticles] = useState([]);
@@ -257,12 +283,15 @@
             }, [featuredArticles]);
 
             const categories = useMemo(() => {
+                // 如果正在載入中，回傳一個假的分類列表以撐開版面
+                if (loading && articles.length === 0) return ["All", "載入中...", "載入中...", "載入中..."];
+
                 const primaryCats = articles.flatMap(a => a.primaryCategories);
                 const uniqueCats = new Set(primaryCats);
                 uniqueCats.delete(FEATURED_TAG);
                 uniqueCats.add(SUBMISSION_TAG);
                 return ["All", ...Array.from(uniqueCats).sort()];
-            }, [articles]);
+            }, [articles, loading]);
 
             const filteredArticles = useMemo(() => {
                 const sourceList = searchTerm ? articles : regularArticles;
@@ -340,125 +369,137 @@
 
                     {/* Main Content */}
                     <main className="max-w-6xl mx-auto px-4 py-6 md:py-8">
-                        {/* Featured Hero Section */}
-                        {!searchTerm && heroArticle && (
-                            <div className="mb-10 md:mb-12 animate-fade-in">
-                                <div key={heroArticle.id} className="relative bg-[#2A2F75] rounded-3xl overflow-hidden shadow-2xl shadow-indigo-200 group transform transition-all animate-fade-in">
-                                    <div className="absolute inset-0 bg-gradient-to-br from-[#2A2F75] to-[#4c2a75] z-0"></div>
-                                    <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-pink-500/20 blur-[100px] rounded-full pointer-events-none translate-x-1/3 -translate-y-1/3"></div>
+                        {/* Loading State: Skeleton Screens */}
+                        {loading && articles.length === 0 ? (
+                            <div className="animate-fade-in">
+                                <SkeletonHero />
+                                <div className="mb-8 flex gap-4 overflow-hidden">
+                                    {[1,2,3,4].map(i => <div key={i} className="h-8 w-24 bg-slate-200 rounded-full animate-pulse"></div>)}
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {[1, 2, 3, 4, 5, 6].map((n) => <SkeletonCard key={n} />)}
+                                </div>
+                            </div>
+                        ) : (
+                            /* Real Content */
+                            <>
+                                {/* Featured Hero Section */}
+                                {!searchTerm && heroArticle && (
+                                    <div className="mb-10 md:mb-12 animate-fade-in">
+                                        <div key={heroArticle.id} className="relative bg-[#2A2F75] rounded-3xl overflow-hidden shadow-2xl shadow-indigo-200 group transform transition-all animate-fade-in">
+                                            <div className="absolute inset-0 bg-gradient-to-br from-[#2A2F75] to-[#4c2a75] z-0"></div>
+                                            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-pink-500/20 blur-[100px] rounded-full pointer-events-none translate-x-1/3 -translate-y-1/3"></div>
 
-                                    <div className="relative z-10 flex flex-col md:flex-row h-full min-h-[auto] md:min-h-[400px]">
-                                        <div className="w-full md:w-[55%] relative h-56 md:h-auto overflow-hidden">
-                                            {heroArticle.image ? (
-                                                <img src={heroArticle.image} alt={heroArticle.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
-                                            ) : null}
-                                            <div className={`w-full h-full absolute inset-0 bg-slate-800 flex items-center justify-center ${heroArticle.image ? 'hidden' : 'flex'}`}>
-                                                <Layers className="text-white/20" size={64} />
-                                            </div>
-                                            <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-transparent via-[#2A2F75]/20 to-[#2A2F75] md:via-[#2A2F75]/50 md:to-[#2A2F75]"></div>
-                                        </div>
+                                            <div className="relative z-10 flex flex-col md:flex-row h-full min-h-[auto] md:min-h-[400px]">
+                                                <div className="w-full md:w-[55%] relative h-56 md:h-auto overflow-hidden">
+                                                    {heroArticle.image ? (
+                                                        <img src={heroArticle.image} alt={heroArticle.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
+                                                    ) : null}
+                                                    <div className={`w-full h-full absolute inset-0 bg-slate-800 flex items-center justify-center ${heroArticle.image ? 'hidden' : 'flex'}`}>
+                                                        <Layers className="text-white/20" size={64} />
+                                                    </div>
+                                                    <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-transparent via-[#2A2F75]/20 to-[#2A2F75] md:via-[#2A2F75]/50 md:to-[#2A2F75]"></div>
+                                                </div>
 
-                                        <div className="w-full md:w-[45%] p-6 md:p-12 flex flex-col justify-center text-white relative">
-                                            <div className="flex flex-wrap items-center gap-2 mb-3 md:mb-4">
-                                                <span className="flex items-center gap-1 bg-yellow-400 text-[#2A2F75] px-3 py-1 rounded-full text-xs font-black tracking-wider shadow-lg shadow-yellow-400/20">
-                                                    <Crown size={14} fill="currentColor" /> EDITOR'S CHOICE
-                                                </span>
-                                                {heroArticle.categories.filter(c => c !== FEATURED_TAG).map(cat => (
-                                                    <span key={cat} className="text-white/70 text-xs font-medium border border-white/20 px-2 py-0.5 rounded-full">{cat}</span>
-                                                ))}
-                                            </div>
+                                                <div className="w-full md:w-[45%] p-6 md:p-12 flex flex-col justify-center text-white relative">
+                                                    <div className="flex flex-wrap items-center gap-2 mb-3 md:mb-4">
+                                                        <span className="flex items-center gap-1 bg-yellow-400 text-[#2A2F75] px-3 py-1 rounded-full text-xs font-black tracking-wider shadow-lg shadow-yellow-400/20">
+                                                            <Crown size={14} fill="currentColor" /> EDITOR'S CHOICE
+                                                        </span>
+                                                        {heroArticle.categories.filter(c => c !== FEATURED_TAG).map(cat => (
+                                                            <span key={cat} className="text-white/70 text-xs font-medium border border-white/20 px-2 py-0.5 rounded-full">{cat}</span>
+                                                        ))}
+                                                    </div>
 
-                                            <h2 className="text-xl md:text-4xl font-bold leading-tight mb-3 md:mb-4 text-shadow-sm group-hover:text-pink-200 transition-colors">{heroArticle.title}</h2>
-                                            <p className="text-indigo-100/80 text-sm md:text-base mb-6 md:mb-8 line-clamp-3 leading-relaxed">{heroArticle.summary}</p>
+                                                    <h2 className="text-xl md:text-4xl font-bold leading-tight mb-3 md:mb-4 text-shadow-sm group-hover:text-pink-200 transition-colors">{heroArticle.title}</h2>
+                                                    <p className="text-indigo-100/80 text-sm md:text-base mb-6 md:mb-8 line-clamp-3 leading-relaxed">{heroArticle.summary}</p>
 
-                                            <div className="mt-auto flex items-center justify-between border-t border-white/10 pt-4 md:pt-6">
-                                                <div className="flex items-center gap-2">
-                                                    {heroArticle.author && (
+                                                    <div className="mt-auto flex items-center justify-between border-t border-white/10 pt-4 md:pt-6">
                                                         <div className="flex items-center gap-2">
-                                                            <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white"><User size={14} /></div>
-                                                            <div className="flex flex-col"><span className="text-xs text-white/60">Author</span><span className="text-xs font-medium">{heroArticle.author}</span></div>
+                                                            {heroArticle.author && (
+                                                                <div className="flex items-center gap-2">
+                                                                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white"><User size={14} /></div>
+                                                                    <div className="flex flex-col"><span className="text-xs text-white/60">Author</span><span className="text-xs font-medium">{heroArticle.author}</span></div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <a href={heroArticle.link} target="_blank" rel="noopener noreferrer" className="group/btn flex items-center gap-2 bg-white text-[#2A2F75] px-5 py-2 md:px-6 md:py-3 rounded-xl font-bold hover:bg-pink-50 active:scale-95 transition-all shadow-lg hover:shadow-xl hover:shadow-white/10">
+                                                            閱讀 <ArrowRight size={16} className="group-hover/btn:translate-x-1 transition-transform" />
+                                                        </a>
+                                                    </div>
+                                                    {featuredArticles.length > 1 && (
+                                                        <div className="absolute bottom-4 right-6 md:bottom-6 md:right-12 flex gap-2">
+                                                            {featuredArticles.map((_, idx) => (
+                                                                <button key={idx} onClick={() => setHeroIndex(idx)} className={`w-2 h-2 rounded-full transition-all duration-300 ${idx === heroIndex ? 'bg-white w-6' : 'bg-white/30 hover:bg-white/60'}`} aria-label={`Go to slide ${idx + 1}`} />
+                                                            ))}
                                                         </div>
                                                     )}
                                                 </div>
-                                                <a href={heroArticle.link} target="_blank" rel="noopener noreferrer" className="group/btn flex items-center gap-2 bg-white text-[#2A2F75] px-5 py-2 md:px-6 md:py-3 rounded-xl font-bold hover:bg-pink-50 active:scale-95 transition-all shadow-lg hover:shadow-xl hover:shadow-white/10">
-                                                    閱讀 <ArrowRight size={16} className="group-hover/btn:translate-x-1 transition-transform" />
-                                                </a>
                                             </div>
-                                            {featuredArticles.length > 1 && (
-                                                <div className="absolute bottom-4 right-6 md:bottom-6 md:right-12 flex gap-2">
-                                                    {featuredArticles.map((_, idx) => (
-                                                        <button key={idx} onClick={() => setHeroIndex(idx)} className={`w-2 h-2 rounded-full transition-all duration-300 ${idx === heroIndex ? 'bg-white w-6' : 'bg-white/30 hover:bg-white/60'}`} aria-label={`Go to slide ${idx + 1}`} />
-                                                    ))}
-                                                </div>
-                                            )}
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Categories */}
-                        <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
-                                {categories.map(cat => (
-                                    <button key={cat} onClick={() => setSelectedCategory(cat)} className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all active:scale-95 ${selectedCategory === cat ? 'bg-gradient-to-r from-[#6B4D9E] to-[#C0568B] text-white shadow-md shadow-pink-200 border border-transparent' : 'bg-white text-slate-600 border border-slate-200 hover:border-pink-300 hover:text-[#C0568B]'}`}>
-                                        {cat}
-                                    </button>
-                                ))}
-                            </div>
-                            <div className="flex items-center gap-3 self-start md:self-auto">
-                                {dataSource === 'api' && (
-                                    <div className="flex items-center gap-2 text-xs text-[#6B4D9E] bg-purple-50 px-3 py-1 rounded-full border border-purple-100">
-                                        <span className="relative flex h-2 w-2">
-                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
-                                            <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
-                                        </span>
-                                        <span>24小時持續更新 {lastUpdated && `(${lastUpdated})`}</span>
                                     </div>
                                 )}
-                            </div>
-                        </div>
 
-                        {/* Article Grid */}
-                        {loading && articles.length === 0 ? (
-                            <div className="text-center py-20 text-slate-400"><div className="animate-bounce mb-2 text-2xl">⚡</div>資料載入中...</div>
-                        ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {filteredArticles.map((article) => (
-                                    <a key={article.id} href={article.link} target="_blank" rel="noopener noreferrer" className="group bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-xl hover:shadow-purple-200/50 hover:-translate-y-1 active:scale-[0.98] transition-all duration-300 flex flex-col h-full">
-                                        <div className="h-44 bg-slate-100 relative overflow-hidden group-hover:opacity-100">
-                                            {article.image ? (
-                                                <img src={article.image} alt={article.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
-                                            ) : null}
-                                            <div className={`w-full h-full absolute top-0 left-0 bg-gradient-to-br from-slate-100 to-slate-200 flex flex-col items-center justify-center text-slate-400 ${article.image ? 'hidden' : 'flex'}`}>
-                                                <Layers className="mb-2" size={32} />
-                                                {article.image ? <span className="text-[10px] flex items-center gap-1"><AlertCircle size={10} /> 圖片讀取失敗</span> : <span className="text-[10px] text-slate-300">無圖片</span>}
+                                {/* Categories */}
+                                <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
+                                        {categories.map(cat => (
+                                            <button key={cat} onClick={() => setSelectedCategory(cat)} className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all active:scale-95 ${selectedCategory === cat ? 'bg-gradient-to-r from-[#6B4D9E] to-[#C0568B] text-white shadow-md shadow-pink-200 border border-transparent' : 'bg-white text-slate-600 border border-slate-200 hover:border-pink-300 hover:text-[#C0568B]'}`}>
+                                                {cat}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <div className="flex items-center gap-3 self-start md:self-auto">
+                                        {dataSource === 'api' && (
+                                            <div className="flex items-center gap-2 text-xs text-[#6B4D9E] bg-purple-50 px-3 py-1 rounded-full border border-purple-100">
+                                                <span className="relative flex h-2 w-2">
+                                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+                                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
+                                                </span>
+                                                <span>24小時持續更新 {lastUpdated && `(${lastUpdated})`}</span>
                                             </div>
-                                            <div className="absolute top-3 left-3 flex flex-wrap gap-1 max-w-[90%]">
-                                                {article.categories.filter(c => c !== FEATURED_TAG).map((cat, idx) => (
-                                                    <span key={idx} className="px-2 py-1 bg-white/95 backdrop-blur-sm text-xs font-bold text-[#6B4D9E] rounded-md shadow-sm">{cat}</span>
-                                                ))}
-                                            </div>
-                                        </div>
-                                        <div className="p-5 flex flex-col flex-grow">
-                                            <h3 className="text-lg font-bold text-slate-800 mb-2 line-clamp-2 leading-snug group-hover:text-[#C0568B] transition-colors">{article.title}</h3>
-                                            <p className="text-slate-500 text-sm mb-4 line-clamp-3 flex-grow">{article.summary}</p>
-                                            {article.author && <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium mb-3"><User size={12} className="text-slate-400" /><span>{article.author}</span></div>}
-                                            <div className="pt-4 border-t border-slate-100 flex items-center justify-between mt-auto">
-                                                <div className="flex items-center gap-2 text-xs text-slate-400"><Calendar size={12} />{article.date ? article.date.substring(0, 10) : "近期更新"}</div>
-                                                <div className="flex items-center gap-1 text-xs font-bold text-[#6B4D9E] group-hover:underline">閱讀全文 <ExternalLink size={12} /></div>
-                                            </div>
-                                        </div>
-                                    </a>
-                                ))}
-                            </div>
-                        )}
+                                        )}
+                                    </div>
+                                </div>
 
-                        {!loading && filteredArticles.length === 0 && (
-                            <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-300">
-                                <h3 className="text-lg font-medium text-slate-600">找不到相關文章</h3>
-                                <button onClick={() => {setSearchTerm(""); setSelectedCategory("All");}} className="mt-4 px-4 py-2 bg-purple-50 text-[#6B4D9E] rounded-lg text-sm font-medium">清除篩選</button>
-                            </div>
+                                {/* Article Grid */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {filteredArticles.map((article) => (
+                                        <a key={article.id} href={article.link} target="_blank" rel="noopener noreferrer" className="group bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-xl hover:shadow-purple-200/50 hover:-translate-y-1 active:scale-[0.98] transition-all duration-300 flex flex-col h-full">
+                                            <div className="h-44 bg-slate-100 relative overflow-hidden group-hover:opacity-100">
+                                                {article.image ? (
+                                                    <img src={article.image} alt={article.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
+                                                ) : null}
+                                                <div className={`w-full h-full absolute top-0 left-0 bg-gradient-to-br from-slate-100 to-slate-200 flex flex-col items-center justify-center text-slate-400 ${article.image ? 'hidden' : 'flex'}`}>
+                                                    <Layers className="mb-2" size={32} />
+                                                    {article.image ? <span className="text-[10px] flex items-center gap-1"><AlertCircle size={10} /> 圖片讀取失敗</span> : <span className="text-[10px] text-slate-300">無圖片</span>}
+                                                </div>
+                                                <div className="absolute top-3 left-3 flex flex-wrap gap-1 max-w-[90%]">
+                                                    {article.categories.filter(c => c !== FEATURED_TAG).map((cat, idx) => (
+                                                        <span key={idx} className="px-2 py-1 bg-white/95 backdrop-blur-sm text-xs font-bold text-[#6B4D9E] rounded-md shadow-sm">{cat}</span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <div className="p-5 flex flex-col flex-grow">
+                                                <h3 className="text-lg font-bold text-slate-800 mb-2 line-clamp-2 leading-snug group-hover:text-[#C0568B] transition-colors">{article.title}</h3>
+                                                <p className="text-slate-500 text-sm mb-4 line-clamp-3 flex-grow">{article.summary}</p>
+                                                {article.author && <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium mb-3"><User size={12} className="text-slate-400" /><span>{article.author}</span></div>}
+                                                <div className="pt-4 border-t border-slate-100 flex items-center justify-between mt-auto">
+                                                    <div className="flex items-center gap-2 text-xs text-slate-400"><Calendar size={12} />{article.date ? article.date.substring(0, 10) : "近期更新"}</div>
+                                                    <div className="flex items-center gap-1 text-xs font-bold text-[#6B4D9E] group-hover:underline">閱讀全文 <ExternalLink size={12} /></div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    ))}
+                                </div>
+
+                                {!loading && filteredArticles.length === 0 && (
+                                    <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-300">
+                                        <h3 className="text-lg font-medium text-slate-600">找不到相關文章</h3>
+                                        <button onClick={() => {setSearchTerm(""); setSelectedCategory("All");}} className="mt-4 px-4 py-2 bg-purple-50 text-[#6B4D9E] rounded-lg text-sm font-medium">清除篩選</button>
+                                    </div>
+                                )}
+                            </>
                         )}
                     </main>
 
