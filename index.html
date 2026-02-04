@@ -5,10 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI x 教育 | 親子天下雙週報策展</title>
     
-    <!-- 引入 Tailwind CSS -->
+    <!-- 1. 錯誤處理與環境設定 (優先執行) -->
+    <script>
+        // 設定全域環境變數，防止 React 在某些情況下報錯
+        window.process = { env: { NODE_ENV: 'production' } };
+
+        // 全域錯誤攔截器：如果畫面空白，會顯示錯誤訊息
+        window.onerror = function(message, source, lineno, colno, error) {
+            const root = document.getElementById('root');
+            if (root) {
+                root.innerHTML = `
+                    <div style="padding: 20px; color: #7f1d1d; background: #fef2f2; border: 1px solid #f87171; border-radius: 8px; margin: 20px; font-family: monospace;">
+                        <h3 style="font-weight: bold; margin-bottom: 10px;">⚠️ 網頁載入發生錯誤</h3>
+                        <p><strong>錯誤訊息：</strong> ${message}</p>
+                        <p><strong>位置：</strong> Line ${lineno}, Column ${colno}</p>
+                        <p style="margin-top: 10px; font-size: 12px; color: #991b1b;">請將此畫面截圖提供給開發人員以進行修復。</p>
+                    </div>
+                `;
+            }
+        };
+    </script>
+
+    <!-- 2. 引入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- 設定 Tailwind 主題顏色 -->
     <script>
         tailwind.config = {
             theme: {
@@ -28,7 +47,7 @@
         }
     </script>
 
-    <!-- 引入 React 與 ReactDOM -->
+    <!-- 3. 模組對應表 (Import Map) -->
     <script type="importmap">
         {
             "imports": {
@@ -39,30 +58,30 @@
         }
     </script>
     
-    <!-- 引入 Babel 用於解析 JSX (鎖定穩定版本 7.24.5 以修復 targets 錯誤) -->
+    <!-- 4. 引入 Babel (鎖定版本) -->
     <script src="https://unpkg.com/@babel/standalone@7.24.5/babel.min.js"></script>
 
     <style>
-        .scrollbar-hide::-webkit-scrollbar {
-            display: none;
-        }
-        .scrollbar-hide {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-        .text-shadow {
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        }
-        .text-shadow-sm {
-            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
-        }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        .text-shadow { text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+        .text-shadow-sm { text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans">
-    <div id="root"></div>
+    <!-- 應用程式掛載點 -->
+    <div id="root">
+        <!-- 預設顯示載入畫面，避免 React 啟動前的短暫空白 -->
+        <div class="min-h-screen flex items-center justify-center text-slate-400">
+            <div class="animate-pulse flex flex-col items-center">
+                <div class="h-8 w-8 bg-slate-300 rounded-full mb-4"></div>
+                <div class="text-sm">系統載入中...</div>
+            </div>
+        </div>
+    </div>
 
-    <!-- React 應用程式邏輯 -->
-    <!-- 修復重點：移除 env preset，只保留 react，避免 import 被轉譯為 require -->
+    <!-- 5. React 應用程式邏輯 -->
+    <!-- 注意：這裡移除了 'env' preset，只保留 'react'，避免 require 錯誤 -->
     <script type="text/babel" data-type="module" data-presets="react">
         import React, { useState, useEffect, useMemo } from 'react';
         import { createRoot } from 'react-dom/client';
@@ -76,7 +95,6 @@
         const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxwao8aHQ3hCkxYj5MndNs6ObaPy4fphHr-WCdt-cCEK9uRpTaOomHJcTqNZKiMOxg7/exec";
         const HEADER_IMAGE_URL = ""; 
 
-        // 步驟 2: 欄位對應設定
         const COLUMN_MAPPING = {
             title: "Title",       
             category1: "Category1", 
@@ -91,7 +109,6 @@
         const FEATURED_TAG = "主編精選";
         const SUBMISSION_TAG = "讀者投書";
 
-        // --- 範例資料 ---
         const MOCK_DATA = [
             {
                 id: 1,
@@ -128,7 +145,7 @@
             }
         ];
 
-        // 新增：骨架屏組件 (Skeleton Card)
+        // 骨架屏組件
         const SkeletonCard = () => (
             <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden h-full flex flex-col">
                 <div className="h-44 bg-slate-200 animate-pulse"></div>
@@ -147,7 +164,6 @@
             </div>
         );
 
-        // 新增：Hero 骨架屏
         const SkeletonHero = () => (
             <div className="mb-10 md:mb-12 relative bg-slate-200 rounded-3xl overflow-hidden shadow-sm h-[400px] animate-pulse">
                 <div className="absolute inset-0 bg-gradient-to-r from-slate-300 to-slate-200"></div>
@@ -165,27 +181,24 @@
             const [lastUpdated, setLastUpdated] = useState(null);
             const [heroIndex, setHeroIndex] = useState(0);
 
+            // 錯誤邊界 (簡單版)
+            const [hasError, setHasError] = useState(false);
+
             const processImageUrl = (url) => {
                 if (!url) return null;
                 let cleanUrl = String(url).trim();
-                
                 if (cleanUrl.includes('drive.google.com')) {
                     let id = null;
                     const parts = cleanUrl.match(/\/d\/(.*?)(?:\/|$)/);
-                    if (parts && parts[1]) {
-                        id = parts[1];
-                    } else {
+                    if (parts && parts[1]) id = parts[1];
+                    else {
                         try {
                             const urlObj = new URL(cleanUrl);
                             const idParam = urlObj.searchParams.get("id");
                             if (idParam) id = idParam;
-                        } catch (e) {
-                            console.log("URL parse error", e);
-                        }
+                        } catch (e) { console.log("URL parse error", e); }
                     }
-                    if (id) {
-                        return `https://drive.google.com/uc?export=view&id=${id}`;
-                    }
+                    if (id) return `https://drive.google.com/uc?export=view&id=${id}`;
                 }
                 return cleanUrl;
             };
@@ -196,39 +209,33 @@
                     setDataSource("mock");
                     return;
                 }
-
                 setLoading(true);
                 setError(null);
                 try {
                     const response = await fetch(APPS_SCRIPT_URL);
                     if (!response.ok) throw new Error(`連線失敗: ${response.status}`);
-
                     const data = await response.json();
                     if (!Array.isArray(data)) throw new Error("回傳格式錯誤，預期為陣列");
 
                     const formattedArticles = data.map((item, index) => {
                         const title = item[COLUMN_MAPPING.title];
                         if (!title) return null;
-
-                        const cat1 = item[COLUMN_MAPPING.category1];
-                        const cat2 = item[COLUMN_MAPPING.category2];
                         
+                        // 處理 Category1
                         let primaryList = [];
-                        if (cat1) {
-                        primaryList = String(cat1).split(/[,，]/).map(c => c.trim()).filter(c => c.length > 0);
-                        }
+                        const cat1 = item[COLUMN_MAPPING.category1];
+                        if (cat1) primaryList = String(cat1).split(/[,，]/).map(c => c.trim()).filter(c => c.length > 0);
 
+                        // 處理 Category2
                         let secondaryList = [];
-                        if (cat2) {
-                        secondaryList = String(cat2).split(/[,，]/).map(c => c.trim()).filter(c => c.length > 0);
-                        }
+                        const cat2 = item[COLUMN_MAPPING.category2];
+                        if (cat2) secondaryList = String(cat2).split(/[,，]/).map(c => c.trim()).filter(c => c.length > 0);
                         
                         let fullList = [...primaryList, ...secondaryList];
                         fullList = [...new Set(fullList)];
                         if (fullList.length === 0) fullList = ["未分類"];
 
-                        const rawImage = item[COLUMN_MAPPING.image];
-                        const processedImage = processImageUrl(rawImage);
+                        const processedImage = processImageUrl(item[COLUMN_MAPPING.image]);
 
                         return {
                             id: index,
@@ -238,7 +245,7 @@
                             summary: item[COLUMN_MAPPING.summary] || "",
                             link: item[COLUMN_MAPPING.link] || "#",
                             image: processedImage,
-                            rawImage: rawImage, 
+                            rawImage: item[COLUMN_MAPPING.image], 
                             date: item[COLUMN_MAPPING.date] ? String(item[COLUMN_MAPPING.date]) : "",
                             author: item[COLUMN_MAPPING.author] || ""
                         };
@@ -247,7 +254,6 @@
                     setArticles(formattedArticles);
                     setDataSource("api");
                     setLastUpdated(new Date().toLocaleTimeString());
-
                 } catch (err) {
                     console.error("Fetch Error:", err);
                     setError(err.message || "發生未知錯誤");
@@ -258,19 +264,14 @@
                 }
             };
 
-            useEffect(() => {
-                fetchData();
-            }, []);
+            useEffect(() => { fetchData(); }, []);
 
             const { featuredArticles, regularArticles } = useMemo(() => {
                 const featured = [];
                 const regular = [];
                 articles.forEach(article => {
-                    if (article.categories.includes(FEATURED_TAG)) {
-                        featured.push(article);
-                    } else {
-                        regular.push(article);
-                    }
+                    if (article.categories.includes(FEATURED_TAG)) featured.push(article);
+                    else regular.push(article);
                 });
                 return { featuredArticles: featured, regularArticles: regular };
             }, [articles]);
@@ -284,9 +285,7 @@
             }, [featuredArticles]);
 
             const categories = useMemo(() => {
-                // 如果正在載入中，回傳一個假的分類列表以撐開版面
-                if (loading && articles.length === 0) return ["All", "載入中...", "載入中...", "載入中..."];
-
+                if (loading && articles.length === 0) return ["All", "載入中..."];
                 const primaryCats = articles.flatMap(a => a.primaryCategories);
                 const uniqueCats = new Set(primaryCats);
                 uniqueCats.delete(FEATURED_TAG);
@@ -310,19 +309,16 @@
 
             return (
                 <div className="min-h-screen bg-slate-50 font-sans text-slate-800 pb-20">
-                    {/* Header */}
                     <header className="relative border-b border-indigo-900/10 shadow-lg sticky top-0 z-20 overflow-hidden">
                         <div className="absolute inset-0 bg-gradient-to-r from-[#2A2F75] via-[#6B4D9E] to-[#E56B8B]"></div>
                         <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 blur-[60px] rounded-full pointer-events-none -translate-y-1/2 translate-x-1/2"></div>
                         <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/20 blur-[40px] rounded-full pointer-events-none translate-y-1/2 -translate-x-1/2"></div>
-
                         {HEADER_IMAGE_URL && (
                             <div className="absolute inset-0 z-0">
                                 <img src={HEADER_IMAGE_URL} alt="Header" className="w-full h-full object-cover" />
                                 <div className="absolute inset-0 bg-black/20"></div>
                             </div>
                         )}
-
                         <div className="relative z-10 max-w-6xl mx-auto px-4 py-4 md:py-5 flex flex-col md:flex-row items-center justify-between gap-4 md:gap-6">
                             <div className="flex items-start gap-4 text-white w-full md:w-auto">
                                 {!HEADER_IMAGE_URL && (
@@ -344,23 +340,12 @@
                                     </div>
                                 </div>
                             </div>
-
                             <div className="flex items-center gap-3 w-full md:w-auto">
                                 <div className="relative w-full md:w-64 group">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/60 group-hover:text-white transition-colors" size={16} />
-                                    <input 
-                                        type="text" 
-                                        placeholder="搜尋文章..." 
-                                        className="w-full pl-9 pr-4 py-2 bg-white/10 border border-white/20 rounded-lg text-sm text-white placeholder-white/50 focus:bg-white/20 focus:border-white/40 focus:outline-none transition-all backdrop-blur-sm"
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                    />
+                                    <input type="text" placeholder="搜尋文章..." className="w-full pl-9 pr-4 py-2 bg-white/10 border border-white/20 rounded-lg text-sm text-white placeholder-white/50 focus:bg-white/20 focus:border-white/40 focus:outline-none transition-all backdrop-blur-sm" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                                 </div>
-                                <button 
-                                    onClick={fetchData} 
-                                    className="flex items-center gap-2 px-3 py-2 text-white/80 hover:text-white hover:bg-white/10 active:bg-white/20 active:scale-95 rounded-lg transition-all text-sm font-medium backdrop-blur-sm border border-transparent hover:border-white/10"
-                                    title="重新整理資料"
-                                >
+                                <button onClick={fetchData} className="flex items-center gap-2 px-3 py-2 text-white/80 hover:text-white hover:bg-white/10 active:bg-white/20 active:scale-95 rounded-lg transition-all text-sm font-medium backdrop-blur-sm border border-transparent hover:border-white/10" title="重新整理資料">
                                     <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
                                     <span className="hidden md:inline">{loading ? "讀取中" : "更新"}</span>
                                 </button>
@@ -368,9 +353,7 @@
                         </div>
                     </header>
 
-                    {/* Main Content */}
                     <main className="max-w-6xl mx-auto px-4 py-6 md:py-8">
-                        {/* Loading State: Skeleton Screens */}
                         {loading && articles.length === 0 ? (
                             <div className="animate-fade-in">
                                 <SkeletonHero />
@@ -382,15 +365,12 @@
                                 </div>
                             </div>
                         ) : (
-                            /* Real Content */
                             <>
-                                {/* Featured Hero Section */}
                                 {!searchTerm && heroArticle && (
                                     <div className="mb-10 md:mb-12 animate-fade-in">
                                         <div key={heroArticle.id} className="relative bg-[#2A2F75] rounded-3xl overflow-hidden shadow-2xl shadow-indigo-200 group transform transition-all animate-fade-in">
                                             <div className="absolute inset-0 bg-gradient-to-br from-[#2A2F75] to-[#4c2a75] z-0"></div>
                                             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-pink-500/20 blur-[100px] rounded-full pointer-events-none translate-x-1/3 -translate-y-1/3"></div>
-
                                             <div className="relative z-10 flex flex-col md:flex-row h-full min-h-[auto] md:min-h-[400px]">
                                                 <div className="w-full md:w-[55%] relative h-56 md:h-auto overflow-hidden">
                                                     {heroArticle.image ? (
@@ -401,32 +381,18 @@
                                                     </div>
                                                     <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-transparent via-[#2A2F75]/20 to-[#2A2F75] md:via-[#2A2F75]/50 md:to-[#2A2F75]"></div>
                                                 </div>
-
                                                 <div className="w-full md:w-[45%] p-6 md:p-12 flex flex-col justify-center text-white relative">
                                                     <div className="flex flex-wrap items-center gap-2 mb-3 md:mb-4">
-                                                        <span className="flex items-center gap-1 bg-yellow-400 text-[#2A2F75] px-3 py-1 rounded-full text-xs font-black tracking-wider shadow-lg shadow-yellow-400/20">
-                                                            <Crown size={14} fill="currentColor" /> EDITOR'S CHOICE
-                                                        </span>
-                                                        {heroArticle.categories.filter(c => c !== FEATURED_TAG).map(cat => (
-                                                            <span key={cat} className="text-white/70 text-xs font-medium border border-white/20 px-2 py-0.5 rounded-full">{cat}</span>
-                                                        ))}
+                                                        <span className="flex items-center gap-1 bg-yellow-400 text-[#2A2F75] px-3 py-1 rounded-full text-xs font-black tracking-wider shadow-lg shadow-yellow-400/20"><Crown size={14} fill="currentColor" /> EDITOR'S CHOICE</span>
+                                                        {heroArticle.categories.filter(c => c !== FEATURED_TAG).map(cat => <span key={cat} className="text-white/70 text-xs font-medium border border-white/20 px-2 py-0.5 rounded-full">{cat}</span>)}
                                                     </div>
-
                                                     <h2 className="text-xl md:text-4xl font-bold leading-tight mb-3 md:mb-4 text-shadow-sm group-hover:text-pink-200 transition-colors">{heroArticle.title}</h2>
                                                     <p className="text-indigo-100/80 text-sm md:text-base mb-6 md:mb-8 line-clamp-3 leading-relaxed">{heroArticle.summary}</p>
-
                                                     <div className="mt-auto flex items-center justify-between border-t border-white/10 pt-4 md:pt-6">
                                                         <div className="flex items-center gap-2">
-                                                            {heroArticle.author && (
-                                                                <div className="flex items-center gap-2">
-                                                                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white"><User size={14} /></div>
-                                                                    <div className="flex flex-col"><span className="text-xs text-white/60">Author</span><span className="text-xs font-medium">{heroArticle.author}</span></div>
-                                                                </div>
-                                                            )}
+                                                            {heroArticle.author && (<div className="flex items-center gap-2"><div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white"><User size={14} /></div><div className="flex flex-col"><span className="text-xs text-white/60">Author</span><span className="text-xs font-medium">{heroArticle.author}</span></div></div>)}
                                                         </div>
-                                                        <a href={heroArticle.link} target="_blank" rel="noopener noreferrer" className="group/btn flex items-center gap-2 bg-white text-[#2A2F75] px-5 py-2 md:px-6 md:py-3 rounded-xl font-bold hover:bg-pink-50 active:scale-95 transition-all shadow-lg hover:shadow-xl hover:shadow-white/10">
-                                                            閱讀 <ArrowRight size={16} className="group-hover/btn:translate-x-1 transition-transform" />
-                                                        </a>
+                                                        <a href={heroArticle.link} target="_blank" rel="noopener noreferrer" className="group/btn flex items-center gap-2 bg-white text-[#2A2F75] px-5 py-2 md:px-6 md:py-3 rounded-xl font-bold hover:bg-pink-50 active:scale-95 transition-all shadow-lg hover:shadow-xl hover:shadow-white/10">閱讀 <ArrowRight size={16} className="group-hover/btn:translate-x-1 transition-transform" /></a>
                                                     </div>
                                                     {featuredArticles.length > 1 && (
                                                         <div className="absolute bottom-4 right-6 md:bottom-6 md:right-12 flex gap-2">
@@ -441,36 +407,27 @@
                                     </div>
                                 )}
 
-                                {/* Categories */}
                                 <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
                                     <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
                                         {categories.map(cat => (
-                                            <button key={cat} onClick={() => setSelectedCategory(cat)} className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all active:scale-95 ${selectedCategory === cat ? 'bg-gradient-to-r from-[#6B4D9E] to-[#C0568B] text-white shadow-md shadow-pink-200 border border-transparent' : 'bg-white text-slate-600 border border-slate-200 hover:border-pink-300 hover:text-[#C0568B]'}`}>
-                                                {cat}
-                                            </button>
+                                            <button key={cat} onClick={() => setSelectedCategory(cat)} className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all active:scale-95 ${selectedCategory === cat ? 'bg-gradient-to-r from-[#6B4D9E] to-[#C0568B] text-white shadow-md shadow-pink-200 border border-transparent' : 'bg-white text-slate-600 border border-slate-200 hover:border-pink-300 hover:text-[#C0568B]'}`}>{cat}</button>
                                         ))}
                                     </div>
                                     <div className="flex items-center gap-3 self-start md:self-auto">
                                         {dataSource === 'api' && (
                                             <div className="flex items-center gap-2 text-xs text-[#6B4D9E] bg-purple-50 px-3 py-1 rounded-full border border-purple-100">
-                                                <span className="relative flex h-2 w-2">
-                                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
-                                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
-                                                </span>
+                                                <span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span></span>
                                                 <span>24小時持續更新 {lastUpdated && `(${lastUpdated})`}</span>
                                             </div>
                                         )}
                                     </div>
                                 </div>
 
-                                {/* Article Grid */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                     {filteredArticles.map((article) => (
                                         <a key={article.id} href={article.link} target="_blank" rel="noopener noreferrer" className="group bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-xl hover:shadow-purple-200/50 hover:-translate-y-1 active:scale-[0.98] transition-all duration-300 flex flex-col h-full">
                                             <div className="h-44 bg-slate-100 relative overflow-hidden group-hover:opacity-100">
-                                                {article.image ? (
-                                                    <img src={article.image} alt={article.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
-                                                ) : null}
+                                                {article.image ? <img src={article.image} alt={article.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} /> : null}
                                                 <div className={`w-full h-full absolute top-0 left-0 bg-gradient-to-br from-slate-100 to-slate-200 flex flex-col items-center justify-center text-slate-400 ${article.image ? 'hidden' : 'flex'}`}>
                                                     <Layers className="mb-2" size={32} />
                                                     {article.image ? <span className="text-[10px] flex items-center gap-1"><AlertCircle size={10} /> 圖片讀取失敗</span> : <span className="text-[10px] text-slate-300">無圖片</span>}
@@ -504,7 +461,6 @@
                         )}
                     </main>
 
-                    {/* CTA Section */}
                     <section className="bg-slate-50 border-t border-slate-200">
                         <div className="max-w-6xl mx-auto px-4 py-12">
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
