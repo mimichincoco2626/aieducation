@@ -39,8 +39,8 @@
         }
     </script>
     
-    <!-- 引入 Babel 用於解析 JSX -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- 引入 Babel 用於解析 JSX (鎖定穩定版本 7.24.5 以修復 targets 錯誤) -->
+    <script src="https://unpkg.com/@babel/standalone@7.24.5/babel.min.js"></script>
 
     <style>
         .scrollbar-hide::-webkit-scrollbar {
@@ -62,7 +62,8 @@
     <div id="root"></div>
 
     <!-- React 應用程式邏輯 -->
-    <script type="text/babel" data-type="module">
+    <!-- 修復重點：移除 env preset，只保留 react，避免 import 被轉譯為 require -->
+    <script type="text/babel" data-type="module" data-presets="react">
         import React, { useState, useEffect, useMemo } from 'react';
         import { createRoot } from 'react-dom/client';
         import { 
