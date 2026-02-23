@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI x 教育 | 親子天下雙週報策展</title>
     
-    <!-- 1. 引入 Tailwind CSS -->
+    <!-- 引入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -26,111 +26,109 @@
         }
     </script>
 
+    <!-- 模組對應表 (Import Map) -->
+    <script type="importmap">
+        {
+            "imports": {
+                "react": "https://esm.sh/react@18.2.0",
+                "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+                "lucide-react": "https://esm.sh/lucide-react@0.263.1"
+            }
+        }
+    </script>
+    
+    <!-- 引入 Babel (穩定版) -->
+    <script src="https://unpkg.com/@babel/standalone@7.24.5/babel.min.js"></script>
+
     <style>
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
         .text-shadow { text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
         .text-shadow-sm { text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
-        .static-skeleton { background-color: #e2e8f0; animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
-        /* 隱藏 body 原本的 margin，讓 iframe 嵌入更服貼 */
-        body { margin: 0; padding: 0; background-color: transparent; }
+        
+        /* 🚨 關鍵防護 1：強制鎖死外層，開啟內部捲動，適應發燒網的 850px 限制 */
+        html, body { 
+            margin: 0; padding: 0; 
+            width: 100%; height: 100%; 
+            overflow: hidden; /* 把發燒網可能產生的破圖捲軸藏起來 */
+            background-color: transparent; 
+        }
+        
+        /* 讓這個容器自己產生順暢的捲軸 */
+        #cw-ai-root { 
+            width: 100%; height: 100%; 
+            overflow-y: auto; 
+            -webkit-overflow-scrolling: touch; 
+            background-color: #f8fafc;
+        }
+
+        /* 🚨 關鍵防護 2：使用 CSS 強制隱藏第二個以後的所有重複結構，根除疊影 */
+        body > div#cw-ai-root ~ div#cw-ai-root {
+            display: none !important;
+        }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans">
+<body>
     
-    <div id="cw-ai-curator-widget">
-        <header class="relative border-b border-indigo-900/10 shadow-lg sticky top-0 z-20 overflow-hidden h-[88px] bg-gradient-to-r from-[#2A2F75] via-[#6B4D9E] to-[#E56B8B]">
-            <div class="relative z-10 max-w-6xl mx-auto px-4 py-5 flex flex-col md:flex-row items-center justify-between gap-6">
-                <div class="flex items-start gap-4 text-white w-full md:w-auto">
-                    <div class="hidden md:flex flex-col items-center justify-center pt-1 opacity-50">
-                        <div class="text-4xl font-bold leading-none">AI<span class="text-pink-300 mx-1">×</span>教育</div>
-                    </div>
-                </div>
+    <!-- 唯一的掛載點 -->
+    <div id="cw-ai-root">
+        <div class="min-h-[850px] flex items-center justify-center text-slate-400">
+            <div class="animate-pulse flex flex-col items-center">
+                <div class="h-8 w-8 bg-slate-300 rounded-full mb-4"></div>
+                <div class="text-sm font-medium">系統載入中...</div>
             </div>
-        </header>
-
-        <main class="max-w-6xl mx-auto px-4 py-8">
-            <div class="mb-10 md:mb-12 relative bg-slate-200 rounded-3xl overflow-hidden shadow-sm h-[400px] static-skeleton"></div>
-            <div class="mb-8 flex gap-4 overflow-hidden">
-                <div class="h-8 w-24 bg-slate-200 rounded-full static-skeleton"></div>
-                <div class="h-8 w-24 bg-slate-200 rounded-full static-skeleton"></div>
-                <div class="h-8 w-24 bg-slate-200 rounded-full static-skeleton"></div>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div class="bg-white rounded-2xl border border-slate-200 h-[400px] flex flex-col p-4 gap-4"><div class="h-40 bg-slate-200 rounded-xl static-skeleton"></div><div class="h-6 bg-slate-200 rounded w-3/4 static-skeleton"></div><div class="h-4 bg-slate-200 rounded w-full static-skeleton"></div><div class="h-4 bg-slate-200 rounded w-2/3 static-skeleton"></div></div>
-                <div class="bg-white rounded-2xl border border-slate-200 h-[400px] flex flex-col p-4 gap-4"><div class="h-40 bg-slate-200 rounded-xl static-skeleton"></div><div class="h-6 bg-slate-200 rounded w-3/4 static-skeleton"></div><div class="h-4 bg-slate-200 rounded w-full static-skeleton"></div><div class="h-4 bg-slate-200 rounded w-2/3 static-skeleton"></div></div>
-                <div class="bg-white rounded-2xl border border-slate-200 h-[400px] flex flex-col p-4 gap-4 hidden md:flex"><div class="h-40 bg-slate-200 rounded-xl static-skeleton"></div><div class="h-6 bg-slate-200 rounded w-3/4 static-skeleton"></div><div class="h-4 bg-slate-200 rounded w-full static-skeleton"></div></div>
-            </div>
-        </main>
+        </div>
     </div>
 
-    <!-- 2. 主程式邏輯 -->
-    <script type="module">
-        import React, { useState, useEffect, useMemo } from 'https://esm.sh/react@18.2.0';
-        import { createRoot } from 'https://esm.sh/react-dom@18.2.0/client';
-        import htm from 'https://esm.sh/htm@3.1.1';
+    <!-- 主程式邏輯 -->
+    <script type="text/babel" data-type="module" data-presets="react">
+        import React, { useState, useEffect, useMemo } from 'react';
+        import { createRoot } from 'react-dom/client';
         import { 
             Search, BookOpen, ExternalLink, Filter, Calendar, Tag, RefreshCw, 
             Layers, User, AlertCircle, Bug, CheckCircle, XCircle, Crown, 
-            ArrowRight, Star, Mail, FileText, PenTool, ChevronDown 
-        } from 'https://esm.sh/lucide-react@0.263.1';
+            ArrowRight, Star, Mail, FileText, PenTool 
+        } from 'lucide-react';
 
-        const html = htm.bind(React.createElement);
-
+        // --- 分析追蹤 ---
         const trackEvent = (eventName, params) => {
             if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
                 window.gtag('event', eventName, params);
             }
-            console.log(`[📊 Tracking] ${eventName}`, params);
         };
 
+        // --- 設定區 ---
         const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxwao8aHQ3hCkxYj5MndNs6ObaPy4fphHr-WCdt-cCEK9uRpTaOomHJcTqNZKiMOxg7/exec";
         const HEADER_IMAGE_URL = ""; 
         const CACHE_KEY = "ai_curator_cache_v1";
-        
+
         const COLUMN_MAPPING = {
-            title: "Title",       
-            category1: "Category1", 
-            category2: "Category2", 
-            summary: "Summary",   
-            link: "Link",         
-            image: "Image",       
-            date: "Date",         
-            author: "Author"      
+            title: "Title", category1: "Category1", category2: "Category2", 
+            summary: "Summary", link: "Link", image: "Image", date: "Date", author: "Author"      
         };
 
         const FEATURED_TAG = "主編精選";
         const SUBMISSION_TAG = "讀者投書";
-        const ITEMS_PER_PAGE = 6; 
 
-        const MOCK_DATA = [
-            {
-                id: 1, title: "AI 在 K-12 教育中的應用指南", categories: ["教學實務", "政策規範", "主編精選"], primaryCategories: ["教學實務"],
-                summary: "這是一筆範例資料。如果您看到這張卡片，代表程式還沒讀取到您的 Google Sheet 資料，或是讀取失敗。",
-                link: "#", date: "2024-01-15", image: "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&q=80&w=800", author: "範例作者"
-            }
-        ];
+        const MOCK_DATA = [{
+            id: 1, title: "AI 在 K-12 教育中的應用指南", categories: ["教學實務", "政策規範", "主編精選"], primaryCategories: ["教學實務"],
+            summary: "目前讀取不到您的 Google Sheet 資料，這是一筆範例。",
+            link: "#", date: "2024-01-15", image: null, author: "系統提示"
+        }];
 
-        const SkeletonCard = () => html`
-            <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden h-full flex flex-col">
-                <div class="h-44 bg-slate-200 animate-pulse"></div>
-                <div class="p-5 flex flex-col gap-4 flex-grow">
-                    <div class="h-7 bg-slate-200 rounded animate-pulse w-3/4"></div>
-                    <div class="space-y-2 flex-grow">
-                        <div class="h-4 bg-slate-200 rounded animate-pulse w-full"></div>
-                        <div class="h-4 bg-slate-200 rounded animate-pulse w-full"></div>
-                        <div class="h-4 bg-slate-200 rounded animate-pulse w-2/3"></div>
+        // 骨架屏組件
+        const SkeletonCard = () => (
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden h-full flex flex-col">
+                <div className="h-44 bg-slate-200 animate-pulse"></div>
+                <div className="p-5 flex flex-col gap-4 flex-grow">
+                    <div className="h-7 bg-slate-200 rounded animate-pulse w-3/4"></div>
+                    <div className="space-y-2 flex-grow">
+                        <div className="h-4 bg-slate-200 rounded animate-pulse w-full"></div>
+                        <div className="h-4 bg-slate-200 rounded animate-pulse w-2/3"></div>
                     </div>
                 </div>
             </div>
-        `;
-
-        const SkeletonHero = () => html`
-            <div class="mb-10 md:mb-12 relative bg-slate-200 rounded-3xl overflow-hidden shadow-sm h-[400px] animate-pulse">
-                <div class="absolute inset-0 bg-gradient-to-r from-slate-300 to-slate-200"></div>
-            </div>
-        `;
+        );
 
         function App() {
             const [articles, setArticles] = useState([]);
@@ -138,34 +136,8 @@
             const [searchTerm, setSearchTerm] = useState("");
             const [selectedCategory, setSelectedCategory] = useState("All");
             const [dataSource, setDataSource] = useState("mock");
-            const [showDebug, setShowDebug] = useState(false);
             const [lastUpdated, setLastUpdated] = useState(null);
             const [heroIndex, setHeroIndex] = useState(0);
-            const [isUsingCache, setIsUsingCache] = useState(false);
-            const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
-
-            // 新增：Iframe 自動高度偵測通訊機制
-            useEffect(() => {
-                const sendHeight = () => {
-                    // 取得整個內容的實際高度
-                    const height = document.documentElement.scrollHeight || document.body.scrollHeight;
-                    // 將高度訊息發送給母網站
-                    window.parent.postMessage({ type: 'ai-curator-resize', height: height }, '*');
-                };
-
-                // 當畫面有任何變動（例如載入完成、點擊載入更多）時，重新發送高度
-                const resizeObserver = new ResizeObserver(sendHeight);
-                resizeObserver.observe(document.body);
-                
-                // 首次也送一次
-                sendHeight();
-
-                return () => resizeObserver.disconnect();
-            }, []);
-
-            useEffect(() => {
-                setVisibleCount(ITEMS_PER_PAGE);
-            }, [searchTerm, selectedCategory]);
 
             const processImageUrl = (url) => {
                 if (!url) return null;
@@ -177,37 +149,26 @@
                     else {
                         try {
                             const urlObj = new URL(cleanUrl);
-                            const idParam = urlObj.searchParams.get("id");
-                            if (idParam) id = idParam;
-                        } catch (e) { console.log("URL parse error", e); }
+                            id = urlObj.searchParams.get("id");
+                        } catch (e) {}
                     }
                     if (id) return `https://drive.google.com/uc?export=view&id=${id}`;
                 }
                 return cleanUrl;
             };
 
-            const saveDataToCache = (data) => {
-                try {
-                    const cacheData = { timestamp: Date.now(), data: data };
-                    localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
-                } catch (e) { console.error("Cache save failed", e); }
-            };
-
-            const loadFromCache = () => {
-                try {
-                    const cached = localStorage.getItem(CACHE_KEY);
-                    if (cached) {
-                        const { timestamp, data } = JSON.parse(cached);
-                        return { data, timestamp };
-                    }
-                } catch (e) { console.error("Cache load failed", e); }
-                return null;
-            };
-
             const formatData = (data) => {
+                 // 🚨 關鍵防護 3：過濾重複的 Google Sheet 資料
+                 const seenTitles = new Set();
+
                  return data.map((item, index) => {
                         const title = item[COLUMN_MAPPING.title];
                         if (!title) return null;
+
+                        // 去重複判斷
+                        const cleanTitle = title.trim();
+                        if (seenTitles.has(cleanTitle)) return null; 
+                        seenTitles.add(cleanTitle);
                         
                         let primaryList = [];
                         const cat1 = item[COLUMN_MAPPING.category1];
@@ -217,21 +178,17 @@
                         const cat2 = item[COLUMN_MAPPING.category2];
                         if (cat2) secondaryList = String(cat2).split(/[,，]/).map(c => c.trim()).filter(c => c.length > 0);
                         
-                        let fullList = [...primaryList, ...secondaryList];
-                        fullList = [...new Set(fullList)];
+                        let fullList = [...new Set([...primaryList, ...secondaryList])];
                         if (fullList.length === 0) fullList = ["未分類"];
-
-                        const processedImage = processImageUrl(item[COLUMN_MAPPING.image]);
 
                         return {
                             id: index,
-                            title: title,
+                            title: cleanTitle,
                             categories: fullList,
                             primaryCategories: primaryList,
                             summary: item[COLUMN_MAPPING.summary] || "",
                             link: item[COLUMN_MAPPING.link] || "#",
-                            image: processedImage,
-                            rawImage: item[COLUMN_MAPPING.image], 
+                            image: processImageUrl(item[COLUMN_MAPPING.image]),
                             date: item[COLUMN_MAPPING.date] ? String(item[COLUMN_MAPPING.date]) : "",
                             author: item[COLUMN_MAPPING.author] || ""
                         };
@@ -239,41 +196,31 @@
             };
 
             const fetchData = async () => {
-                if (!APPS_SCRIPT_URL) {
-                    setArticles(MOCK_DATA);
-                    setDataSource("mock");
-                    setLoading(false);
-                    return;
-                }
-
-                const cached = loadFromCache();
-                if (cached) {
-                    const formattedArticles = formatData(cached.data);
-                    setArticles(formattedArticles);
-                    setDataSource("cache");
-                    setLastUpdated(new Date(cached.timestamp).toLocaleTimeString());
-                    setIsUsingCache(true);
-                    setLoading(false);
-                }
-
                 try {
-                    const response = await fetch(APPS_SCRIPT_URL);
-                    if (!response.ok) throw new Error(`連線失敗: ${response.status}`);
-                    const data = await response.json();
-                    if (!Array.isArray(data)) throw new Error("回傳格式錯誤");
-
-                    const formattedArticles = formatData(data);
-                    setArticles(formattedArticles);
-                    setDataSource("api");
-                    setLastUpdated(new Date().toLocaleTimeString());
-                    setIsUsingCache(false);
-                    saveDataToCache(data);
-                } catch (err) {
-                    console.error("Fetch Error:", err);
-                    if (!cached) {
-                        setArticles(MOCK_DATA);
-                        setDataSource("mock");
+                    // 先讀取快取加速顯示
+                    const cached = localStorage.getItem(CACHE_KEY);
+                    if (cached) {
+                        const { timestamp, data } = JSON.parse(cached);
+                        setArticles(formatData(data));
+                        setDataSource("cache");
+                        setLastUpdated(new Date(timestamp).toLocaleTimeString());
+                        setLoading(false);
                     }
+
+                    // 背景向 Google Sheet 拿新資料
+                    const response = await fetch(APPS_SCRIPT_URL);
+                    if (!response.ok) throw new Error("Network response was not ok");
+                    const data = await response.json();
+                    
+                    if (Array.isArray(data)) {
+                        setArticles(formatData(data));
+                        setDataSource("api");
+                        setLastUpdated(new Date().toLocaleTimeString());
+                        localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: Date.now(), data: data }));
+                    }
+                } catch (err) {
+                    console.error(err);
+                    if (articles.length === 0) setArticles(formatData(MOCK_DATA));
                 } finally {
                     setLoading(false);
                 }
@@ -311,10 +258,7 @@
             const filteredArticles = useMemo(() => {
                 const sourceList = searchTerm ? articles : regularArticles;
                 return sourceList.filter(article => {
-                    const searchContent = (
-                        article.title + article.summary + 
-                        article.categories.join(" ") + article.author
-                    ).toLowerCase();
+                    const searchContent = (article.title + article.summary + article.categories.join(" ")).toLowerCase();
                     return searchContent.includes(searchTerm.toLowerCase()) && 
                         (selectedCategory === "All" || article.categories.includes(selectedCategory));
                 });
@@ -322,260 +266,191 @@
 
             const heroArticle = featuredArticles.length > 0 ? featuredArticles[heroIndex] : null;
 
-            return html`
-                <div class="w-full bg-slate-50 font-sans text-slate-800 pb-10">
-                    <header class="relative border-b border-indigo-900/10 shadow-lg sticky top-0 z-20 overflow-hidden">
-                        <div class="absolute inset-0 bg-gradient-to-r from-[#2A2F75] via-[#6B4D9E] to-[#E56B8B]"></div>
-                        <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 blur-[60px] rounded-full pointer-events-none -translate-y-1/2 translate-x-1/2"></div>
-                        <div class="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/20 blur-[40px] rounded-full pointer-events-none translate-y-1/2 -translate-x-1/2"></div>
-                        ${HEADER_IMAGE_URL && html`
-                            <div class="absolute inset-0 z-0">
-                                <img src=${HEADER_IMAGE_URL} alt="Header" class="w-full h-full object-cover" />
-                                <div class="absolute inset-0 bg-black/20"></div>
+            return (
+                <div className="w-full bg-slate-50 font-sans text-slate-800 pb-10">
+                    <header className="relative border-b border-indigo-900/10 shadow-lg sticky top-0 z-20 overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-r from-[#2A2F75] via-[#6B4D9E] to-[#E56B8B]"></div>
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 blur-[60px] rounded-full pointer-events-none -translate-y-1/2 translate-x-1/2"></div>
+                        <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/20 blur-[40px] rounded-full pointer-events-none translate-y-1/2 -translate-x-1/2"></div>
+                        {HEADER_IMAGE_URL && (
+                            <div className="absolute inset-0 z-0">
+                                <img src={HEADER_IMAGE_URL} alt="Header" className="w-full h-full object-cover" />
+                                <div className="absolute inset-0 bg-black/20"></div>
                             </div>
-                        `}
-                        <div class="relative z-10 max-w-6xl mx-auto px-4 py-4 md:py-5 flex flex-col md:flex-row items-center justify-between gap-4 md:gap-6">
-                            <div class="flex items-start gap-4 text-white w-full md:w-auto">
-                                ${!HEADER_IMAGE_URL && html`
-                                    <div class="hidden md:flex flex-col items-center justify-center pt-1">
-                                        <div class="text-4xl font-bold leading-none tracking-tighter">AI<span class="text-pink-300 mx-1">×</span>教育</div>
-                                        <div class="w-full h-[1px] bg-white/30 mt-1 mb-1 transform -rotate-1"></div>
-                                        <div class="text-[10px] tracking-widest opacity-80">BIWEEKLY NEWSLETTER</div>
+                        )}
+                        <div className="relative z-10 max-w-6xl mx-auto px-4 py-4 md:py-5 flex flex-col md:flex-row items-center justify-between gap-4 md:gap-6">
+                            <div className="flex items-start gap-4 text-white w-full md:w-auto">
+                                {!HEADER_IMAGE_URL && (
+                                    <div className="hidden md:flex flex-col items-center justify-center pt-1">
+                                        <div className="text-4xl font-bold leading-none tracking-tighter">AI<span className="text-pink-300 mx-1">×</span>教育</div>
+                                        <div className="w-full h-[1px] bg-white/30 mt-1 mb-1 transform -rotate-1"></div>
+                                        <div className="text-[10px] tracking-widest opacity-80">BIWEEKLY NEWSLETTER</div>
                                     </div>
-                                `}
-                                <div class="${HEADER_IMAGE_URL ? 'bg-black/40 backdrop-blur-md p-4 rounded-xl' : ''} flex-1 md:flex-none">
-                                    ${!HEADER_IMAGE_URL && html`
-                                        <h1 class="md:hidden text-2xl font-bold tracking-tight mb-1 flex items-center">
-                                            AI<span class="text-pink-300 mx-1">×</span>教育
+                                )}
+                                <div className={`${HEADER_IMAGE_URL ? 'bg-black/40 backdrop-blur-md p-4 rounded-xl' : ''} flex-1 md:flex-none`}>
+                                    {!HEADER_IMAGE_URL && (
+                                        <h1 className="md:hidden text-2xl font-bold tracking-tight mb-1 flex items-center">
+                                            AI<span className="text-pink-300 mx-1">×</span>教育
                                         </h1>
-                                    `}
-                                    <div class="flex flex-col gap-1">
-                                        <p class="text-sm md:text-base font-medium text-white/95 text-shadow">陪你看懂 AI 時代的教育與學習：</p>
-                                        <p class="text-sm md:text-base font-medium text-white/95 text-shadow">AI 改變了什麼？我們可以怎麼因應？</p>
+                                    )}
+                                    <div className="flex flex-col gap-1">
+                                        <p className="text-sm md:text-base font-medium text-white/95 text-shadow">陪你看懂 AI 時代的教育與學習：</p>
+                                        <p className="text-sm md:text-base font-medium text-white/95 text-shadow">AI 改變了什麼？我們可以怎麼因應？</p>
                                     </div>
                                 </div>
                             </div>
-                            <div class="flex items-center gap-3 w-full md:w-auto">
-                                <div class="relative w-full md:w-64 group">
-                                    <${Search} class="absolute left-3 top-1/2 -translate-y-1/2 text-white/60 group-hover:text-white transition-colors" size=${16} />
-                                    <input type="text" placeholder="搜尋文章..." class="w-full pl-9 pr-4 py-2 bg-white/10 border border-white/20 rounded-lg text-sm text-white placeholder-white/50 focus:bg-white/20 focus:border-white/40 focus:outline-none transition-all backdrop-blur-sm" value=${searchTerm} onInput=${(e) => setSearchTerm(e.target.value)} />
+                            <div className="flex items-center gap-3 w-full md:w-auto">
+                                <div className="relative w-full md:w-64 group">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/60 group-hover:text-white transition-colors" size={16} />
+                                    <input 
+                                        type="text" 
+                                        placeholder="搜尋文章..." 
+                                        className="w-full pl-9 pr-4 py-2 bg-white/10 border border-white/20 rounded-lg text-sm text-white placeholder-white/50 focus:bg-white/20 focus:border-white/40 focus:outline-none transition-all backdrop-blur-sm" 
+                                        value={searchTerm} 
+                                        onChange={(e) => setSearchTerm(e.target.value)} 
+                                    />
                                 </div>
-                                <button onClick=${fetchData} class="flex items-center gap-2 px-3 py-2 text-white/80 hover:text-white hover:bg-white/10 active:bg-white/20 active:scale-95 rounded-lg transition-all text-sm font-medium backdrop-blur-sm border border-transparent hover:border-white/10" title="重新整理資料">
-                                    <${RefreshCw} size=${16} class=${loading ? "animate-spin" : ""} />
-                                    <span class="hidden md:inline">${loading ? "讀取中" : "更新"}</span>
+                                <button onClick={fetchData} className="flex items-center gap-2 px-3 py-2 text-white/80 hover:text-white hover:bg-white/10 active:bg-white/20 active:scale-95 rounded-lg transition-all text-sm font-medium backdrop-blur-sm border border-transparent hover:border-white/10" title="重新整理資料">
+                                    <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
+                                    <span className="hidden md:inline">{loading ? "讀取中" : "更新"}</span>
                                 </button>
                             </div>
                         </div>
                     </header>
 
-                    <main class="max-w-6xl mx-auto px-4 py-6 md:py-8">
-                        ${loading && articles.length === 0 ? html`
-                            <div class="animate-fade-in">
-                                <${SkeletonHero} />
-                                <div class="mb-8 flex gap-4 overflow-hidden">
-                                    ${[1,2,3,4].map(i => html`<div key=${i} class="h-8 w-24 bg-slate-200 rounded-full animate-pulse"></div>`)}
-                                </div>
-                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    ${[1, 2, 3, 4, 5, 6].map((n) => html`<${SkeletonCard} key=${n} />`)}
-                                </div>
+                    <main className="max-w-6xl mx-auto px-4 py-6 md:py-8">
+                        {loading && articles.length === 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in">
+                                {[1, 2, 3, 4, 5, 6].map((n) => <SkeletonCard key={n} />)}
                             </div>
-                        ` : html`
+                        ) : (
                             <div>
-                                ${!searchTerm && heroArticle && html`
-                                    <div class="mb-10 md:mb-12 animate-fade-in">
-                                        <div key=${heroArticle.id} class="relative bg-[#2A2F75] rounded-3xl overflow-hidden shadow-2xl shadow-indigo-200 group transform transition-all animate-fade-in">
-                                            <div class="absolute inset-0 bg-gradient-to-br from-[#2A2F75] to-[#4c2a75] z-0"></div>
-                                            <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-pink-500/20 blur-[100px] rounded-full pointer-events-none translate-x-1/3 -translate-y-1/3"></div>
-                                            <div class="relative z-10 flex flex-col md:flex-row h-full min-h-[auto] md:min-h-[400px]">
-                                                <div class="w-full md:w-[55%] relative h-56 md:h-auto overflow-hidden">
-                                                    ${heroArticle.image ? html`<img src=${heroArticle.image} alt=${heroArticle.title} class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" onError=${(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />` : null}
-                                                    <div class=${`w-full h-full absolute inset-0 bg-slate-800 flex items-center justify-center ${heroArticle.image ? 'hidden' : 'flex'}`}>
-                                                        <${Layers} class="text-white/20" size=${64} />
+                                {!searchTerm && heroArticle && (
+                                    <div className="mb-10 md:mb-12 animate-fade-in">
+                                        <div key={heroArticle.id} className="relative bg-[#2A2F75] rounded-3xl overflow-hidden shadow-2xl shadow-indigo-200 group transform transition-all animate-fade-in">
+                                            <div className="absolute inset-0 bg-gradient-to-br from-[#2A2F75] to-[#4c2a75] z-0"></div>
+                                            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-pink-500/20 blur-[100px] rounded-full pointer-events-none translate-x-1/3 -translate-y-1/3"></div>
+                                            <div className="relative z-10 flex flex-col md:flex-row h-full min-h-[auto] md:min-h-[400px]">
+                                                <div className="w-full md:w-[55%] relative h-56 md:h-auto overflow-hidden">
+                                                    {heroArticle.image ? <img src={heroArticle.image} alt={heroArticle.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} /> : null}
+                                                    <div className={`w-full h-full absolute inset-0 bg-slate-800 flex items-center justify-center ${heroArticle.image ? 'hidden' : 'flex'}`}>
+                                                        <Layers className="text-white/20" size={64} />
                                                     </div>
-                                                    <div class="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-transparent via-[#2A2F75]/20 to-[#2A2F75] md:via-[#2A2F75]/50 md:to-[#2A2F75]"></div>
+                                                    <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-transparent via-[#2A2F75]/20 to-[#2A2F75] md:via-[#2A2F75]/50 md:to-[#2A2F75]"></div>
                                                 </div>
-                                                <div class="w-full md:w-[45%] p-6 md:p-12 flex flex-col justify-center text-white relative">
-                                                    <div class="flex flex-wrap items-center gap-2 mb-3 md:mb-4">
-                                                        <span class="flex items-center gap-1 bg-yellow-400 text-[#2A2F75] px-3 py-1 rounded-full text-xs font-black tracking-wider shadow-lg shadow-yellow-400/20"><${Crown} size=${14} fill="currentColor" /> EDITOR'S CHOICE</span>
-                                                        ${heroArticle.categories.filter(c => c !== FEATURED_TAG).map(cat => html`<span key=${cat} class="text-white/70 text-xs font-medium border border-white/20 px-2 py-0.5 rounded-full">${cat}</span>`)}
+                                                <div className="w-full md:w-[45%] p-6 md:p-12 flex flex-col justify-center text-white relative">
+                                                    <div className="flex flex-wrap items-center gap-2 mb-3 md:mb-4">
+                                                        <span className="flex items-center gap-1 bg-yellow-400 text-[#2A2F75] px-3 py-1 rounded-full text-xs font-black tracking-wider shadow-lg shadow-yellow-400/20"><Crown size={14} fill="currentColor" /> EDITOR'S CHOICE</span>
+                                                        {heroArticle.categories.filter(c => c !== FEATURED_TAG).map(cat => <span key={cat} className="text-white/70 text-xs font-medium border border-white/20 px-2 py-0.5 rounded-full">{cat}</span>)}
                                                     </div>
-                                                    <h2 class="text-xl md:text-4xl font-bold leading-tight mb-3 md:mb-4 text-shadow-sm group-hover:text-pink-200 transition-colors">${heroArticle.title}</h2>
-                                                    <p class="text-indigo-100/80 text-sm md:text-base mb-6 md:mb-8 line-clamp-3 leading-relaxed">${heroArticle.summary}</p>
-                                                    <div class="mt-auto flex items-center justify-between border-t border-white/10 pt-4 md:pt-6">
-                                                        <div class="flex items-center gap-2">
-                                                            ${heroArticle.author && html`<div class="flex items-center gap-2"><div class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white"><${User} size=${14} /></div><div class="flex flex-col"><span class="text-xs text-white/60">Author</span><span class="text-xs font-medium">${heroArticle.author}</span></div></div>`}
+                                                    <h2 className="text-xl md:text-4xl font-bold leading-tight mb-3 md:mb-4 text-shadow-sm group-hover:text-pink-200 transition-colors">{heroArticle.title}</h2>
+                                                    <p className="text-indigo-100/80 text-sm md:text-base mb-6 md:mb-8 line-clamp-3 leading-relaxed">{heroArticle.summary}</p>
+                                                    <div className="mt-auto flex items-center justify-between border-t border-white/10 pt-4 md:pt-6">
+                                                        <div className="flex items-center gap-2">
+                                                            {heroArticle.author && (<div className="flex items-center gap-2"><div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white"><User size={14} /></div><div className="flex flex-col"><span className="text-xs text-white/60">Author</span><span className="text-xs font-medium">{heroArticle.author}</span></div></div>)}
                                                         </div>
-                                                        <a 
-                                                            href=${heroArticle.link} 
-                                                            target="_blank" 
-                                                            rel="noopener noreferrer" 
-                                                            onClick=${() => trackEvent('click_article_hero', { article_title: heroArticle.title, url: heroArticle.link })}
-                                                            class="group/btn flex items-center gap-2 bg-white text-[#2A2F75] px-5 py-2 md:px-6 md:py-3 rounded-xl font-bold hover:bg-pink-50 active:scale-95 transition-all shadow-lg hover:shadow-xl hover:shadow-white/10"
-                                                        >
-                                                            閱讀 <${ArrowRight} size=${16} class="group-hover/btn:translate-x-1 transition-transform" />
+                                                        <a href={heroArticle.link} target="_blank" rel="noopener noreferrer" onClick={() => trackEvent('click_article_hero')} className="group/btn flex items-center gap-2 bg-white text-[#2A2F75] px-5 py-2 md:px-6 md:py-3 rounded-xl font-bold hover:bg-pink-50 active:scale-95 transition-all shadow-lg hover:shadow-xl hover:shadow-white/10">
+                                                            閱讀 <ArrowRight size={16} className="group-hover/btn:translate-x-1 transition-transform" />
                                                         </a>
                                                     </div>
-                                                    ${featuredArticles.length > 1 && html`
-                                                        <div class="absolute bottom-4 right-6 md:bottom-6 md:right-12 flex gap-2">
-                                                            ${featuredArticles.map((_, idx) => html`
-                                                                <button key=${idx} onClick=${() => setHeroIndex(idx)} class=${`w-2 h-2 rounded-full transition-all duration-300 ${idx === heroIndex ? 'bg-white w-6' : 'bg-white/30 hover:bg-white/60'}`} aria-label=${`Go to slide ${idx + 1}`} />
-                                                            `)}
-                                                        </div>
-                                                    `}
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                `}
+                                )}
 
-                                <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                    <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
-                                        ${categories.map(cat => html`
+                                <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
+                                        {categories.map(cat => (
                                             <button 
-                                                key=${cat} 
-                                                onClick=${() => {
-                                                    setSelectedCategory(cat);
-                                                    trackEvent('click_category', { category_name: cat });
-                                                }} 
-                                                class=${`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all active:scale-95 ${selectedCategory === cat ? 'bg-gradient-to-r from-[#6B4D9E] to-[#C0568B] text-white shadow-md shadow-pink-200 border border-transparent' : 'bg-white text-slate-600 border border-slate-200 hover:border-pink-300 hover:text-[#C0568B]'}`}
+                                                key={cat} 
+                                                onClick={() => setSelectedCategory(cat)} 
+                                                className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all active:scale-95 ${selectedCategory === cat ? 'bg-gradient-to-r from-[#6B4D9E] to-[#C0568B] text-white shadow-md shadow-pink-200 border border-transparent' : 'bg-white text-slate-600 border border-slate-200 hover:border-pink-300 hover:text-[#C0568B]'}`}
                                             >
-                                                ${cat}
+                                                {cat}
                                             </button>
-                                        `)}
+                                        ))}
                                     </div>
-                                    <div class="flex items-center gap-3 self-start md:self-auto">
-                                        ${dataSource === 'api' && html`
-                                            <div class="flex items-center gap-2 text-xs text-[#6B4D9E] bg-purple-50 px-3 py-1 rounded-full border border-purple-100">
-                                                <span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span></span>
-                                                <span>24小時持續更新 ${lastUpdated && `(${lastUpdated})`}</span>
+                                    <div className="flex items-center gap-3 self-start md:self-auto">
+                                        {dataSource === 'api' && (
+                                            <div className="flex items-center gap-2 text-xs text-[#6B4D9E] bg-purple-50 px-3 py-1 rounded-full border border-purple-100">
+                                                <span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span></span>
+                                                <span>24小時持續更新</span>
                                             </div>
-                                        `}
-                                        ${isUsingCache && html`
-                                            <div class="flex items-center gap-2 text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded-full">
-                                                <span>⚡ 極速載入模式</span>
-                                            </div>
-                                        `}
+                                        )}
                                     </div>
                                 </div>
 
-                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    ${filteredArticles.slice(0, visibleCount).map((article) => html`
-                                        <a 
-                                            key=${article.id} 
-                                            href=${article.link} 
-                                            target="_blank" 
-                                            rel="noopener noreferrer" 
-                                            onClick=${() => trackEvent('click_article_card', { article_title: article.title, url: article.link })}
-                                            class="group bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-xl hover:shadow-purple-200/50 hover:-translate-y-1 active:scale-[0.98] transition-all duration-300 flex flex-col h-full"
-                                        >
-                                            <div class="h-44 bg-slate-100 relative overflow-hidden group-hover:opacity-100">
-                                                ${article.image ? html`<img src=${article.image} alt=${article.title} class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onError=${(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />` : null}
-                                                <div class=${`w-full h-full absolute top-0 left-0 bg-gradient-to-br from-slate-100 to-slate-200 flex flex-col items-center justify-center text-slate-400 ${article.image ? 'hidden' : 'flex'}`}>
-                                                    <${Layers} class="mb-2" size=${32} />
-                                                    ${article.image ? html`<span class="text-[10px] flex items-center gap-1"><${AlertCircle} size=${10} /> 圖片讀取失敗</span>` : html`<span class="text-[10px] text-slate-300">無圖片</span>`}
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {filteredArticles.map((article) => (
+                                        <a key={article.id} href={article.link} target="_blank" rel="noopener noreferrer" onClick={() => trackEvent('click_article_card')} className="group bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-xl hover:shadow-purple-200/50 hover:-translate-y-1 active:scale-[0.98] transition-all duration-300 flex flex-col h-full">
+                                            <div className="h-44 bg-slate-100 relative overflow-hidden group-hover:opacity-100">
+                                                {article.image ? <img src={article.image} alt={article.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} /> : null}
+                                                <div className={`w-full h-full absolute top-0 left-0 bg-gradient-to-br from-slate-100 to-slate-200 flex flex-col items-center justify-center text-slate-400 ${article.image ? 'hidden' : 'flex'}`}>
+                                                    <Layers className="mb-2" size={32} />
+                                                    <span className="text-[10px] text-slate-300">無圖片</span>
                                                 </div>
-                                                <div class="absolute top-3 left-3 flex flex-wrap gap-1 max-w-[90%]">
-                                                    ${article.categories.filter(c => c !== FEATURED_TAG).map((cat, idx) => html`<span key=${idx} class="px-2 py-1 bg-white/95 backdrop-blur-sm text-xs font-bold text-[#6B4D9E] rounded-md shadow-sm">${cat}</span>`)}
+                                                <div className="absolute top-3 left-3 flex flex-wrap gap-1 max-w-[90%]">
+                                                    {article.categories.filter(c => c !== FEATURED_TAG).map((cat, idx) => (
+                                                        <span key={idx} className="px-2 py-1 bg-white/95 backdrop-blur-sm text-xs font-bold text-[#6B4D9E] rounded-md shadow-sm">{cat}</span>
+                                                    ))}
                                                 </div>
                                             </div>
-                                            <div class="p-5 flex flex-col flex-grow">
-                                                <h3 class="text-lg font-bold text-slate-800 mb-2 line-clamp-2 leading-snug group-hover:text-[#C0568B] transition-colors">${article.title}</h3>
-                                                <p class="text-slate-500 text-sm mb-4 line-clamp-3 flex-grow">${article.summary}</p>
-                                                ${article.author && html`<div class="flex items-center gap-1.5 text-xs text-slate-500 font-medium mb-3"><${User} size=${12} class="text-slate-400" /><span>${article.author}</span></div>`}
-                                                <div class="pt-4 border-t border-slate-100 flex items-center justify-between mt-auto">
-                                                    <div class="flex items-center gap-2 text-xs text-slate-400"><${Calendar} size=${12} />${article.date ? article.date.substring(0, 10) : "近期更新"}</div>
-                                                    <div class="flex items-center gap-1 text-xs font-bold text-[#6B4D9E] group-hover:underline">閱讀全文 <${ExternalLink} size=${12} /></div>
+                                            <div className="p-5 flex flex-col flex-grow">
+                                                <h3 className="text-lg font-bold text-slate-800 mb-2 line-clamp-2 leading-snug group-hover:text-[#C0568B] transition-colors">{article.title}</h3>
+                                                <p className="text-slate-500 text-sm mb-4 line-clamp-3 flex-grow">{article.summary}</p>
+                                                {article.author && <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium mb-3"><User size={12} className="text-slate-400" /><span>{article.author}</span></div>}
+                                                <div className="pt-4 border-t border-slate-100 flex items-center justify-between mt-auto">
+                                                    <div className="flex items-center gap-2 text-xs text-slate-400"><Calendar size={12} />{article.date ? article.date.substring(0, 10) : "近期更新"}</div>
+                                                    <div className="flex items-center gap-1 text-xs font-bold text-[#6B4D9E] group-hover:underline">閱讀全文 <ExternalLink size={12} /></div>
                                                 </div>
                                             </div>
                                         </a>
-                                    `)}
+                                    ))}
                                 </div>
-                                
-                                ${visibleCount < filteredArticles.length && html`
-                                    <div class="mt-10 flex justify-center animate-fade-in">
-                                        <button 
-                                            onClick=${() => setVisibleCount(prev => prev + ITEMS_PER_PAGE)}
-                                            class="px-6 py-3 bg-white text-[#6B4D9E] font-bold rounded-full shadow-sm border border-purple-200 hover:bg-purple-50 hover:shadow-md active:scale-95 transition-all flex items-center gap-2"
-                                        >
-                                            載入更多文章 <${ChevronDown} size=${18} />
-                                        </button>
-                                    </div>
-                                `}
-
-                                ${!loading && filteredArticles.length === 0 && html`
-                                    <div class="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-300">
-                                        <h3 class="text-lg font-medium text-slate-600">找不到相關文章</h3>
-                                        <button onClick=${() => {setSearchTerm(""); setSelectedCategory("All");}} class="mt-4 px-4 py-2 bg-purple-50 text-[#6B4D9E] rounded-lg text-sm font-medium">清除篩選</button>
-                                    </div>
-                                `}
                             </div>
-                        `}
+                        )}
                     </main>
 
-                    <section class="bg-slate-50 border-t border-slate-200">
-                        <div class="max-w-6xl mx-auto px-4 py-12">
-                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                                <a 
-                                    href="https://site.parenting.com.tw/topic/aieducationedm_wtledm_-1957" 
-                                    target="_blank" rel="noopener noreferrer" 
-                                    onClick=${() => trackEvent('click_cta_subscribe')}
-                                    class="group flex flex-col items-center justify-center p-6 bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:shadow-purple-100 hover:border-purple-300 active:scale-[0.98] transition-all duration-300 text-center"
-                                >
-                                    <div class="w-14 h-14 bg-purple-50 rounded-full flex items-center justify-center text-[#6B4D9E] mb-4 group-hover:scale-110 group-hover:bg-[#6B4D9E] group-hover:text-white transition-all duration-300"><${Mail} size=${24} /></div>
-                                    <h4 class="font-bold text-slate-800 text-lg mb-1 group-hover:text-[#6B4D9E] transition-colors">訂閱 AIx教育 雙週報</h4>
-                                    <p class="text-sm text-slate-500">掌握最新 AI 教育趨勢與資源</p>
+                    <section className="bg-slate-50 border-t border-slate-200">
+                        <div className="max-w-6xl mx-auto px-4 py-12">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                <a href="https://site.parenting.com.tw/topic/aieducationedm_wtledm_-1957" target="_blank" rel="noopener noreferrer" className="group flex flex-col items-center justify-center p-6 bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:shadow-purple-100 hover:border-purple-300 active:scale-[0.98] transition-all duration-300 text-center">
+                                    <div className="w-14 h-14 bg-purple-50 rounded-full flex items-center justify-center text-[#6B4D9E] mb-4 group-hover:scale-110 group-hover:bg-[#6B4D9E] group-hover:text-white transition-all duration-300"><Mail size={24} /></div>
+                                    <h4 className="font-bold text-slate-800 text-lg mb-1 group-hover:text-[#6B4D9E] transition-colors">訂閱 AIx教育 雙週報</h4>
+                                    <p className="text-sm text-slate-500">掌握最新 AI 教育趨勢與資源</p>
                                 </a>
-                                <a 
-                                    href="https://mimichincoco2626.github.io/NewsletterArchive/" 
-                                    target="_blank" rel="noopener noreferrer" 
-                                    onClick=${() => trackEvent('click_cta_preview')}
-                                    class="group flex flex-col items-center justify-center p-6 bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:shadow-purple-100 hover:border-purple-300 active:scale-[0.98] transition-all duration-300 text-center"
-                                >
-                                    <div class="w-14 h-14 bg-purple-50 rounded-full flex items-center justify-center text-[#6B4D9E] mb-4 group-hover:scale-110 group-hover:bg-[#6B4D9E] group-hover:text-white transition-all duration-300"><${FileText} size=${24} /></div>
-                                    <h4 class="font-bold text-slate-800 text-lg mb-1 group-hover:text-[#6B4D9E] transition-colors">預覽上一期內容</h4>
-                                    <p class="text-sm text-slate-500">精彩專題與教學案例線上看</p>
+                                <a href="https://mimichincoco2626.github.io/NewsletterArchive/" target="_blank" rel="noopener noreferrer" className="group flex flex-col items-center justify-center p-6 bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:shadow-purple-100 hover:border-purple-300 active:scale-[0.98] transition-all duration-300 text-center">
+                                    <div className="w-14 h-14 bg-purple-50 rounded-full flex items-center justify-center text-[#6B4D9E] mb-4 group-hover:scale-110 group-hover:bg-[#6B4D9E] group-hover:text-white transition-all duration-300"><FileText size={24} /></div>
+                                    <h4 className="font-bold text-slate-800 text-lg mb-1 group-hover:text-[#6B4D9E] transition-colors">預覽上一期內容</h4>
+                                    <p className="text-sm text-slate-500">精彩專題與教學案例線上看</p>
                                 </a>
-                                <a 
-                                    href="https://premium.parenting.com.tw/info/more-757" 
-                                    target="_blank" rel="noopener noreferrer" 
-                                    onClick=${() => trackEvent('click_cta_premium')}
-                                    class="group flex flex-col items-center justify-center p-6 bg-gradient-to-br from-[#fffbf0] to-white rounded-2xl border border-amber-200 shadow-sm hover:shadow-lg hover:shadow-amber-100 hover:border-amber-400 active:scale-[0.98] transition-all duration-300 text-center relative overflow-hidden"
-                                >
-                                    <div class="absolute top-0 right-0 w-16 h-16 bg-amber-400/10 rounded-bl-full -mr-8 -mt-8 pointer-events-none group-hover:bg-amber-400/20 transition-colors"></div>
-                                    <div class="w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center text-amber-600 mb-4 group-hover:scale-110 group-hover:bg-amber-500 group-hover:text-white transition-all duration-300"><${Crown} size=${24} /></div>
-                                    <h4 class="font-bold text-slate-800 text-lg mb-1 group-hover:text-amber-600 transition-colors">加入 Premium 會員</h4>
-                                    <p class="text-sm text-slate-500">暢讀親子天下深度專題報導</p>
+                                <a href="https://premium.parenting.com.tw/info/more-757" target="_blank" rel="noopener noreferrer" className="group flex flex-col items-center justify-center p-6 bg-gradient-to-br from-[#fffbf0] to-white rounded-2xl border border-amber-200 shadow-sm hover:shadow-lg hover:shadow-amber-100 hover:border-amber-400 active:scale-[0.98] transition-all duration-300 text-center relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 w-16 h-16 bg-amber-400/10 rounded-bl-full -mr-8 -mt-8 pointer-events-none group-hover:bg-amber-400/20 transition-colors"></div>
+                                    <div className="w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center text-amber-600 mb-4 group-hover:scale-110 group-hover:bg-amber-500 group-hover:text-white transition-all duration-300"><Crown size={24} /></div>
+                                    <h4 className="font-bold text-slate-800 text-lg mb-1 group-hover:text-amber-600 transition-colors">加入 Premium 會員</h4>
+                                    <p className="text-sm text-slate-500">暢讀親子天下深度專題報導</p>
                                 </a>
-                                <a 
-                                    href="mailto:cwpeditor@cw.com.tw" 
-                                    onClick=${() => trackEvent('click_cta_submit')}
-                                    class="group flex flex-col items-center justify-center p-6 bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:shadow-purple-100 hover:border-purple-300 active:scale-[0.98] transition-all duration-300 text-center"
-                                >
-                                    <div class="w-14 h-14 bg-purple-50 rounded-full flex items-center justify-center text-[#6B4D9E] mb-4 group-hover:scale-110 group-hover:bg-[#6B4D9E] group-hover:text-white transition-all duration-300"><${PenTool} size=${24} /></div>
-                                    <h4 class="font-bold text-slate-800 text-lg mb-1 group-hover:text-[#6B4D9E] transition-colors">讀者投書</h4>
-                                    <p class="text-sm text-slate-500">歡迎投稿分享您的 AI 教學經驗</p>
+                                <a href="mailto:cwpeditor@cw.com.tw" className="group flex flex-col items-center justify-center p-6 bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:shadow-purple-100 hover:border-purple-300 active:scale-[0.98] transition-all duration-300 text-center">
+                                    <div className="w-14 h-14 bg-purple-50 rounded-full flex items-center justify-center text-[#6B4D9E] mb-4 group-hover:scale-110 group-hover:bg-[#6B4D9E] group-hover:text-white transition-all duration-300"><PenTool size={24} /></div>
+                                    <h4 className="font-bold text-slate-800 text-lg mb-1 group-hover:text-[#6B4D9E] transition-colors">讀者投書</h4>
+                                    <p className="text-sm text-slate-500">歡迎投稿分享您的 AI 教學經驗</p>
                                 </a>
                             </div>
                         </div>
                     </section>
-
-                    <footer class="max-w-6xl mx-auto px-4 py-6 border-t border-slate-200 bg-white">
-                        <div class="flex justify-center items-center gap-4">
-                            <p class="text-slate-400 text-sm">© 2026 親子天下.</p>
-                            <button onClick=${() => setShowDebug(!showDebug)} class="flex items-center gap-1 text-xs text-slate-400 hover:text-[#6B4D9E] transition-colors bg-slate-100 px-2 py-1 rounded">
-                                <${Bug} size=${14} /> ${showDebug ? "關閉檢測" : "資料檢測"}
-                            </button>
-                        </div>
-                    </footer>
                 </div>
-            `;
+            );
         }
 
-        const rootElement = document.getElementById('cw-ai-curator-widget');
-        if (rootElement && !rootElement.dataset.mounted) {
-            rootElement.dataset.mounted = 'true';
-            const root = createRoot(rootElement);
-            root.render(html`<${App} />`);
+        // 🚨 關鍵防護 4：確保 React 絕對只執行一次
+        if (!window.__CW_AI_APP_MOUNTED__) {
+            window.__CW_AI_APP_MOUNTED__ = true;
+            const rootElement = document.getElementById('cw-ai-root');
+            if (rootElement) {
+                const root = createRoot(rootElement);
+                root.render(<App />);
+            }
         }
     </script>
 </body>
