@@ -38,9 +38,8 @@
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans">
     
-    <!-- 應用程式掛載點 -->
-    <!-- 這裡預先寫入靜態 HTML 骨架 (Static Skeleton)，確保點擊連結的瞬間就有畫面，優化 LCP 指標 -->
-    <div id="root">
+    <!-- 應用程式掛載點：已更換為絕對唯一 ID，避免與母站衝突 -->
+    <div id="cw-ai-curator-widget">
         <header class="relative border-b border-indigo-900/10 shadow-lg sticky top-0 z-20 overflow-hidden h-[88px] bg-gradient-to-r from-[#2A2F75] via-[#6B4D9E] to-[#E56B8B]">
             <div class="relative z-10 max-w-6xl mx-auto px-4 py-5 flex flex-col md:flex-row items-center justify-between gap-6">
                 <div class="flex items-start gap-4 text-white w-full md:w-auto">
@@ -64,7 +63,6 @@
 
             <!-- Grid Skeleton -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- 預先產生 6 個假卡片占位 -->
                 <div class="bg-white rounded-2xl border border-slate-200 h-[400px] flex flex-col p-4 gap-4"><div class="h-40 bg-slate-200 rounded-xl static-skeleton"></div><div class="h-6 bg-slate-200 rounded w-3/4 static-skeleton"></div><div class="h-4 bg-slate-200 rounded w-full static-skeleton"></div><div class="h-4 bg-slate-200 rounded w-2/3 static-skeleton"></div></div>
                 <div class="bg-white rounded-2xl border border-slate-200 h-[400px] flex flex-col p-4 gap-4"><div class="h-40 bg-slate-200 rounded-xl static-skeleton"></div><div class="h-6 bg-slate-200 rounded w-3/4 static-skeleton"></div><div class="h-4 bg-slate-200 rounded w-full static-skeleton"></div><div class="h-4 bg-slate-200 rounded w-2/3 static-skeleton"></div></div>
                 <div class="bg-white rounded-2xl border border-slate-200 h-[400px] flex flex-col p-4 gap-4 hidden md:flex"><div class="h-40 bg-slate-200 rounded-xl static-skeleton"></div><div class="h-6 bg-slate-200 rounded w-3/4 static-skeleton"></div><div class="h-4 bg-slate-200 rounded w-full static-skeleton"></div></div>
@@ -73,7 +71,7 @@
         </main>
     </div>
 
-    <!-- 2. 主程式邏輯 (使用原生 ES Modules + HTM，移除 Babel 編譯步驟以提升速度) -->
+    <!-- 2. 主程式邏輯 -->
     <script type="module">
         import React, { useState, useEffect, useMemo } from 'https://esm.sh/react@18.2.0';
         import { createRoot } from 'https://esm.sh/react-dom@18.2.0/client';
@@ -84,7 +82,6 @@
             ArrowRight, Star, Mail, FileText, PenTool 
         } from 'https://esm.sh/lucide-react@0.263.1';
 
-        // 綁定 htm 到 React.createElement，讓我們可以用 html`` 寫法取代 JSX
         const html = htm.bind(React.createElement);
 
         // --- 設定區 ---
@@ -111,14 +108,6 @@
                 id: 1, title: "AI 在 K-12 教育中的應用指南", categories: ["教學實務", "政策規範", "主編精選"], primaryCategories: ["教學實務"],
                 summary: "這是一筆範例資料。如果您看到這張卡片，代表程式還沒讀取到您的 Google Sheet 資料，或是讀取失敗。",
                 link: "#", date: "2024-01-15", image: "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&q=80&w=800", author: "範例作者"
-            },
-            {
-                id: 2, title: "一般文章範例", categories: ["工具評測"], primaryCategories: ["工具評測"],
-                summary: "這是一般文章，會顯示在下方的格狀列表中。", link: "#", date: "2024-01-20", image: null, author: "測試人員"
-            },
-            {
-                id: 3, title: "輪播測試範例", categories: ["趨勢觀點", "主編精選"], primaryCategories: ["趨勢觀點"],
-                summary: "這是第二篇主編精選，用來測試輪播效果是否正常運作。", link: "#", date: "2024-01-25", image: "https://images.unsplash.com/photo-1488190211105-8b0e65b80b4e?auto=format&fit=crop&q=80&w=800", author: "測試人員"
             }
         ];
 
@@ -316,7 +305,7 @@
             const heroArticle = featuredArticles.length > 0 ? featuredArticles[heroIndex] : null;
 
             return html`
-                <div class="min-h-screen bg-slate-50 font-sans text-slate-800 pb-20">
+                <div class="w-full bg-slate-50 font-sans text-slate-800 pb-10">
                     <header class="relative border-b border-indigo-900/10 shadow-lg sticky top-0 z-20 overflow-hidden">
                         <div class="absolute inset-0 bg-gradient-to-r from-[#2A2F75] via-[#6B4D9E] to-[#E56B8B]"></div>
                         <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 blur-[60px] rounded-full pointer-events-none -translate-y-1/2 translate-x-1/2"></div>
@@ -505,45 +494,18 @@
                                 <${Bug} size=${14} /> ${showDebug ? "關閉檢測" : "資料檢測"}
                             </button>
                         </div>
-                        ${showDebug && html`
-                            <div class="mt-4 p-4 bg-slate-900 text-slate-200 rounded-xl text-xs font-mono overflow-x-auto shadow-2xl">
-                                <h4 class="text-emerald-400 font-bold mb-2 text-sm border-b border-slate-700 pb-2 flex justify-between">
-                                    <span>🛠️ 連結診斷 (前 3 筆)</span>
-                                    <span class="text-slate-500">此面板僅供除錯</span>
-                                </h4>
-                                ${articles.length > 0 ? html`
-                                    <div class="space-y-4">
-                                        ${articles.slice(0, 3).map((item, idx) => html`
-                                            <div key=${idx} class="border-b border-slate-800 pb-3 mb-3 last:border-0">
-                                                <div class="text-white font-bold mb-1 flex items-center gap-2">
-                                                    <span class="text-indigo-400">#{idx + 1}</span> 
-                                                    ${item.title}
-                                                    ${item.categories.includes(FEATURED_TAG) && html`<span class="text-yellow-400 bg-yellow-400/20 px-1 rounded">[主編精選]</span>`}
-                                                </div>
-                                                <div class="grid grid-cols-[80px_1fr] gap-2 items-start">
-                                                    <span class="text-slate-500 text-right">原始輸入:</span>
-                                                    <div class="break-all text-slate-400 bg-slate-800/50 p-1 rounded">${item.rawImage || "無 (空值)"}</div>
-                                                    <span class="text-slate-500 text-right">轉換結果:</span>
-                                                    <div class=${`break-all p-1 rounded flex items-center gap-2 ${item.image ? 'text-emerald-300 bg-emerald-900/20' : 'text-red-300'}`}>
-                                                        ${item.image || "無有效連結"}
-                                                        ${item.image && item.image.includes('drive.google.com/uc') && html`<span class="bg-emerald-800 text-emerald-100 text-[10px] px-1 rounded ml-auto whitespace-nowrap">Drive 轉換成功</span>`}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        `)}
-                                    </div>
-                                ` : html`
-                                    <div class="text-amber-400">目前沒有讀取到任何資料，請檢查 Apps Script 網址是否正確。</div>
-                                `}
-                            </div>
-                        `}
                     </footer>
                 </div>
             `;
         }
 
-        const root = createRoot(document.getElementById('root'));
-        root.render(html`<${App} />`);
+        // 防護鎖：檢查是否已經被掛載過，避免重複渲染
+        const rootElement = document.getElementById('cw-ai-curator-widget');
+        if (rootElement && !rootElement.dataset.mounted) {
+            rootElement.dataset.mounted = 'true';
+            const root = createRoot(rootElement);
+            root.render(html`<${App} />`);
+        }
     </script>
 </body>
 </html>
