@@ -46,19 +46,15 @@
         .text-shadow { text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
         .text-shadow-sm { text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
         
-        /* 強制鎖死外層，開啟內部捲動 */
-        html, body { 
-            margin: 0; padding: 0; 
-            width: 100%; height: 100%; 
-            overflow: hidden; 
-            background-color: transparent; 
+        /* 內容依實際高度自然撐開，交由外層 iframe／頁面捲動，避免巢狀雙捲軸 */
+        html, body {
+            margin: 0; padding: 0;
+            width: 100%;
+            background-color: transparent;
         }
-        
-        /* 讓這個容器自己產生順暢的捲軸 */
-        #cw-ai-root { 
-            width: 100%; height: 100%; 
-            overflow-y: auto; 
-            -webkit-overflow-scrolling: touch; 
+
+        #cw-ai-root {
+            width: 100%;
             background-color: #f8fafc;
         }
 
@@ -67,22 +63,27 @@
             display: none !important;
         }
 
-        /* 💡 新增：針對發燒網嵌入環境的強制樣式 */
-        /* 即使在較窄的 iframe 中，也盡量維持水平排列 */
+        /* 窄寬度（手機/窄版 iframe）時垂直堆疊，避免擠壓；640px 以上才排成一行 */
         .fever-force-row {
-            display: flex !important;
-            flex-direction: row !important;
-            align-items: center !important;
-            justify-content: space-between !important;
-            flex-wrap: nowrap !important;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 12px;
             width: 100%;
         }
+        @media (min-width: 640px) {
+            .fever-force-row {
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+            }
+        }
         .fever-force-right {
-            display: flex !important;
-            flex-direction: row !important;
-            align-items: center !important;
-            gap: 12px !important;
-            width: auto !important;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
         }
         /* 強制卡片變為多欄 */
         .fever-force-grid {
@@ -133,6 +134,7 @@
 
         const FEATURED_TAG = "主編精選";
         const SUBMISSION_TAG = "讀者投書";
+        const PAGE_SIZE = 16; // 每次顯示的文章數，避免區塊高度隨文章數量無限增高
 
         const MOCK_DATA = [{
             id: 1, title: "AI 在 K-12 教育中的應用指南", categories: ["教學實務", "政策規範", "主編精選"], primaryCategories: ["教學實務"],
@@ -163,6 +165,7 @@
             const [dataSource, setDataSource] = useState("mock");
             const [lastUpdated, setLastUpdated] = useState(null);
             const [heroIndex, setHeroIndex] = useState(0);
+            const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
             const processImageUrl = (url) => {
                 if (!url) return null;
@@ -285,6 +288,11 @@
                 });
             }, [articles, regularArticles, searchTerm, selectedCategory]);
 
+            // 切換搜尋詞或分類時，重置顯示筆數
+            useEffect(() => {
+                setVisibleCount(PAGE_SIZE);
+            }, [searchTerm, selectedCategory]);
+
             const heroArticle = featuredArticles.length > 0 ? featuredArticles[heroIndex] : null;
 
             return (
@@ -294,7 +302,6 @@
                         <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 blur-[60px] rounded-full pointer-events-none -translate-y-1/2 translate-x-1/2"></div>
                         <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/20 blur-[40px] rounded-full pointer-events-none translate-y-1/2 -translate-x-1/2"></div>
                         
-                        {/* 💡 修改：套用強制水平排列的 Class */}
                         <div className="relative z-10 max-w-6xl mx-auto px-4 py-4 fever-force-row">
                             
                             {/* 左側標題 */}
@@ -309,13 +316,13 @@
                                         AI<span className="text-pink-300 mx-1">×</span>教育
                                     </h1>
                                     <div className="flex flex-col gap-0.5">
-                                        <p className="text-[13px] font-medium text-white/95 text-shadow whitespace-nowrap">陪你看懂 AI 時代的教育與學習：</p>
-                                        <p className="text-[13px] font-medium text-white/95 text-shadow whitespace-nowrap">AI 改變了什麼？我們可以怎麼因應？</p>
+                                        <p className="text-[13px] font-medium text-white/95 text-shadow">陪你看懂 AI 時代的教育與學習：</p>
+                                        <p className="text-[13px] font-medium text-white/95 text-shadow">AI 改變了什麼？我們可以怎麼因應？</p>
                                     </div>
                                 </div>
                             </div>
                             
-                            {/* 右側：訂閱按鈕與搜尋列，強制水平 */}
+                            {/* 右側：訂閱按鈕與搜尋列 */}
                             <div className="fever-force-right">
                                 
                                 {/* 訂閱按鈕縮小版 */}
@@ -423,9 +430,8 @@
                                     </div>
                                 </div>
 
-                                {/* 💡 修改：套用強制多欄格線的 Class */}
                                 <div className="fever-force-grid">
-                                    {filteredArticles.map((article) => (
+                                    {filteredArticles.slice(0, visibleCount).map((article) => (
                                         <a key={article.id} href={article.link} target="_blank" rel="noopener noreferrer" onClick={() => trackEvent('click_article_card')} className="group bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-xl hover:shadow-purple-200/50 hover:-translate-y-1 active:scale-[0.98] transition-all duration-300 flex flex-col h-full">
                                             <div className="h-40 bg-slate-100 relative overflow-hidden group-hover:opacity-100">
                                                 {article.image ? <img src={article.image} alt={article.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} /> : null}
@@ -451,6 +457,17 @@
                                         </a>
                                     ))}
                                 </div>
+
+                                {visibleCount < filteredArticles.length && (
+                                    <div className="mt-8 flex justify-center">
+                                        <button
+                                            onClick={() => setVisibleCount((prev) => prev + PAGE_SIZE)}
+                                            className="px-6 py-2.5 rounded-full text-sm font-bold bg-white text-[#6B4D9E] border border-slate-200 shadow-sm hover:shadow-md hover:border-pink-300 active:scale-95 transition-all"
+                                        >
+                                            載入更多文章（還有 {filteredArticles.length - visibleCount} 篇）
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </main>
